@@ -45,12 +45,13 @@ function pressButton(b) {
     case 'inventory': openInventory(); break;
     case 'potion': drinkPotion(); break;
     case 'weapon': { const n = CLASSES[p.cls].slots.length; equipSlot((p.slot + 1) % n); break; }
-    default: if (b.i !== undefined) useSkill(b.i);
+    default: if (b.i !== undefined) { useSkill(b.i); skillPress(b.i); }
   }
 }
 function releaseButton(b) {
   if (b.id === 'attack') mouse.fire = false;
   if (b.id === 'block' && G.p) G.p.wantBlock = false;
+  if (b.i !== undefined) skillRelease(b.i);
 }
 function releaseAllTouches() {
   for (const r of TOUCH.roles.values()) if (r.kind === 'btn') releaseButton(r.b);
@@ -212,7 +213,9 @@ function drawTouchUI(u) {
     let prog, ready = true;
     if (b.i !== undefined) { const cd = Math.max(0, p.skillCd[b.i]); ready = cd <= 0; prog = ready ? 1 : 1 - cd / p.skillMax[b.i]; }
     if (b.id === 'dash' && p.dashC <= 0) { ready = false; prog = 1 - p.dashCd / p.dashMax; }
-    tCircle(u, b.x, b.y, b.r, on ? [90, 60, 20] : dark, on ? 0.6 : 0.4, ready ? gold : [150, 120, 80], ready ? 0.85 : 0.6, prog);
+    const auto = b.i !== undefined && isAutoSkill(p.active[b.i]), blue = [90, 170, 255];
+    tCircle(u, b.x, b.y, b.r, on ? (auto ? [20, 50, 90] : [90, 60, 20]) : (auto ? [10, 25, 50] : dark), on ? 0.6 : 0.4, auto ? blue : ready ? gold : [150, 120, 80], ready ? 0.85 : 0.6, prog);
+    if (b.i !== undefined && skillHoldK(b.i) > 0.05) tCircle(u, b.x, b.y, b.r + 3, dark, 0, auto ? gold : blue, 0.95, skillHoldK(b.i)); // mantener: se llena hasta cambiar de modo
     if (b.id === 'attack') { u.text(Math.round(b.x) - b.r + 4, Math.round(b.y) - 3, '<', C.dim, { shadow: false }); u.text(Math.round(b.x) + b.r - 8, Math.round(b.y) - 3, '>', C.dim, { shadow: false }); }
     if (b.id === 'block') { shieldIcon(u, Math.round(b.x), Math.round(b.y), on); continue; }
     u.text(Math.round(b.x) + 1, Math.round(b.y) - 3, b.label, ready ? C.goldL : C.dim, { align: 'center', shadow: false });

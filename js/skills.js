@@ -749,6 +749,27 @@ const SKILL_DESC = {
 };
 for (const k in SKILL_DESC) if (SKILLS[k]) SKILLS[k].desc = SKILL_DESC[k];
 
+// Modo automático: mantener una habilidad pulsada 2 s la pone en automático (azul): se lanza sola cuando está
+// lista y hay un enemigo a la vista. Mantenerla otros 2 s la devuelve a manual. Se guarda por habilidad.
+const SKILL_HOLD = 2;
+function skillPress(i) { (G.skHold || (G.skHold = []))[i] = G.totalTime || 0; }
+function skillRelease(i) { if (G.skHold) G.skHold[i] = null; }
+function skillHoldK(i) { const t = G.skHold && G.skHold[i]; return t == null ? 0 : clamp(((G.totalTime || 0) - t) / SKILL_HOLD, 0, 1); }
+function isAutoSkill(id) { return !!(id && G.p.skAuto && G.p.skAuto[id]); }
+function updateAutoSkills() {
+  const p = G.p; if (!p || !p.active) return;
+  for (let i = 0; i < p.active.length; i++) {
+    const id = p.active[i]; if (!id) continue;
+    if (skillHoldK(i) >= 1) { // se cambia el modo
+      p.skAuto = p.skAuto || {}; p.skAuto[id] = !p.skAuto[id]; G.skHold[i] = null;
+      toast(`${SKILL_LABEL[i]} ${SKILLS[id].name.toUpperCase()}: ${p.skAuto[id] ? 'AUTOMÁTICA' : 'MANUAL'}`, false); Sfx.play(p.skAuto[id] ? 'level' : 'locked');
+    }
+    if (isAutoSkill(id) && p.skillCd[i] <= 0 && G.state === 'play' && p.hp > 0) {
+      const t = nearestEnemy(SKILL_RANGE, true);
+      if (t && !t.sleep) useSkill(i);
+    }
+  }
+}
 // 3 habilidades activas (R, C, V) elegidas entre las aprendidas en la partida
 function skillOf(i) { const id = G.p.active && G.p.active[i]; return id ? SKILLS[id] : null; }
 function useSkill(i) {

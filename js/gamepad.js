@@ -61,9 +61,7 @@ function pollPad(dt) {
     if (held(P.block) && shieldOk) p.wantBlock = true; else if (!held(P.block) && was[P.block] && shieldOk) p.wantBlock = false;
     if (down(P.block) && !shieldOk) tryDash();
     if (down(P.dash)) tryDash();
-    if (down(P.skill1)) useSkill(0);
-    if (down(P.skill2)) useSkill(1);
-    if (down(P.skill3)) useSkill(2);
+    [P.skill1, P.skill2, P.skill3].forEach((k, i) => { if (down(k)) { useSkill(i); skillPress(i); } else if (!held(k) && was[k]) skillRelease(i); }); // mantener 2 s: automática
     if (down(P.shield)) toggleOffhand();
     if (down(P.weapon)) { const n = CLASSES[p.cls].slots.length; if (n > 1) equipSlot((p.slot + 1) % n); }
     if (down(P.potion)) drinkPotion();

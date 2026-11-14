@@ -1194,7 +1194,7 @@ function update(dt) {
   updateEnemies(dt);
   updateProjs(dt);
   updatePassives(dt); updatePassives2(dt); updateElites(dt); updateTeles(dt); comboTick();
-  updateAllies(dt); updateTraps(dt); updateZones(dt); updateTimers(dt);
+  updateAllies(dt); updateTraps(dt); updateZones(dt); updateTimers(dt); updateAutoSkills();
   updatePickups(dt);
   updateParts(dt);
   updateVfx(dt);
@@ -1402,7 +1402,7 @@ document.addEventListener('keydown', (ev) => {
     if (e.code === 'KeyH') drinkPotion();
     if (e.code === 'KeyM') { openMap(); return; }
     const si = SKILL_KEYS.indexOf(e.code);
-    if (si >= 0) useSkill(si);
+    if (si >= 0 && !e.repeat) { useSkill(si); skillPress(si); }
   }
   if (e.code === 'KeyN') { G.cfg.muted = !G.cfg.muted; applyCfg(); saveCfg(); logMsg(G.cfg.muted ? 'Sonido apagado' : 'Sonido activado', C.dim); }
   if (G.state === 'play') {
@@ -1414,7 +1414,7 @@ document.addEventListener('keydown', (ev) => {
   else if (G.state === 'title' && e.code === 'KeyO') G.state = 'options';
   else if (G.state === 'options' && (e.code === 'KeyO' || e.code === 'Escape')) G.state = 'title';
 });
-document.addEventListener('keyup', (ev) => { const c = ev.isTrusted === false ? ev.code : translateKey(ev.code); if (c) keys[c] = false; });
+document.addEventListener('keyup', (ev) => { const c = ev.isTrusted === false ? ev.code : translateKey(ev.code); if (c) { keys[c] = false; const si = SKILL_KEYS.indexOf(c); if (si >= 0) skillRelease(si); } });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.fire = false; if (G.p) G.p.wantBlock = false; if (G.state === 'play') pauseGame(); });
 
 function toCanvas(e) {

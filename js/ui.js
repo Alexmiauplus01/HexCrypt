@@ -191,7 +191,7 @@ class UI {
     this.text(cx, 76, 'ENTRA. SAQUEA. SAL CON VIDA.', C.dim, { align: 'center' });
     const px = cx - 120, py = 80;
     this.panel(px, py, 240, 127);
-    const rows = G.padMode ? [['STICK IZQ. · DER.', 'MOVERSE · GIRAR'], ['RT · LT', 'ATACAR · BLOQUEAR'], ['A', 'ESQUIVAR'], ['X  Y  B', 'HABILIDADES R C V'], ['LB · RB', 'ESCUDO · CAMBIAR ARMA'], ['CRUCETA ARRIBA', 'BEBER POCIÓN'], ['CRUCETA ABAJO', 'MAPA'], ['CRUCETA IZQ. · DER.', 'DIARIO · INVENTARIO'], ['START', 'PAUSA'], ['MENÚS', 'CRUCETA + A / B']] : G.touchMode ? [['DEDO IZQUIERDO', 'JOYSTICK: MOVERSE'], ['DESLIZAR A LA DER.', 'GIRAR'], ['ATACAR', 'MANTENER PULSADO'], ['R  C  V', 'HABILIDADES'], ['>>', 'ESQUIVAR'], ['II  J  I', 'PAUSA · DIARIO · INVENTARIO'], ['<>', 'CAMBIAR DE ARMA'], ['ESCUDO', 'BLOQUEAR · ARRASTRA: MOVERTE'], ['PAREDES', 'CAMINA CONTRA ELLAS'], ['EN LOS MENÚS', 'TOCA PARA ELEGIR']] : [['WASD', 'MOVERSE'], ['RATÓN / Q E', 'GIRAR'], ['CLIC / ESPACIO', 'ATACAR'], ['R  C  V', 'HABILIDADES DE CLASE'], ['1 2 3 / RUEDA', 'CAMBIAR DE ARMA'], ['F', 'ALZAR / BAJAR ESCUDO'], ['CLIC DER.', 'BLOQUEAR (ESCUDO)'], ['SHIFT', 'ESQUIVAR'], ['I · J · M', 'INVENTARIO · DIARIO · MAPA'], ['P  ·  N', 'PAUSA · SONIDO']];
+    const rows = G.padMode ? [['STICK IZQ. · DER.', 'MOVERSE · GIRAR'], ['RT · LT', 'ATACAR · BLOQUEAR'], ['A', 'ESQUIVAR'], ['X  Y  B', 'HABILIDADES · MANTÉN 2 S: AUTO'], ['LB · RB', 'ESCUDO · CAMBIAR ARMA'], ['CRUCETA ARRIBA', 'BEBER POCIÓN'], ['CRUCETA ABAJO', 'MAPA'], ['CRUCETA IZQ. · DER.', 'DIARIO · INVENTARIO'], ['START', 'PAUSA'], ['MENÚS', 'CRUCETA + A / B']] : G.touchMode ? [['DEDO IZQUIERDO', 'JOYSTICK: MOVERSE'], ['DESLIZAR A LA DER.', 'GIRAR'], ['ATACAR', 'MANTENER PULSADO'], ['R  C  V', 'HABILIDADES · MANTÉN 2 S: AUTO'], ['>>', 'ESQUIVAR'], ['II  J  I', 'PAUSA · DIARIO · INVENTARIO'], ['<>', 'CAMBIAR DE ARMA'], ['ESCUDO', 'BLOQUEAR · ARRASTRA: MOVERTE'], ['PAREDES', 'CAMINA CONTRA ELLAS'], ['EN LOS MENÚS', 'TOCA PARA ELEGIR']] : [['WASD', 'MOVERSE'], ['RATÓN / Q E', 'GIRAR'], ['CLIC / ESPACIO', 'ATACAR'], ['R  C  V', 'HABILIDADES · MANTÉN 2 S: AUTO'], ['1 2 3 / RUEDA', 'CAMBIAR DE ARMA'], ['F', 'ALZAR / BAJAR ESCUDO'], ['CLIC DER.', 'BLOQUEAR (ESCUDO)'], ['SHIFT', 'ESQUIVAR'], ['I · J · M', 'INVENTARIO · DIARIO · MAPA'], ['P  ·  N', 'PAUSA · SONIDO']];
     rows.forEach(([k, v], i) => { this.text(px + 10, py + 9 + i * 11, k, C.gold); this.text(px + 230, py + 9 + i * 11, v, C.ink, { align: 'right' }); });
     if (G.hasSave) { // continuar la partida guardada o empezar otra
       [['continue', 'CONTINUAR'], ['new', 'NUEVA PARTIDA']].forEach(([id, t], i) => {
@@ -545,9 +545,11 @@ class UI {
     this.darken(x, y0, w, p.active.length * 12 + 4, 0.5);
     p.active.forEach((id, i) => {
       const sk = id && SKILLS[id], y = y0 + 3 + i * 12, cd = Math.max(0, p.skillCd[i]), rdy = cd <= 0;
-      this.text(x + 3, y, SKILL_LABEL[i], sk && rdy ? C.goldL : C.dim, { shadow: false });
+      const auto = sk && isAutoSkill(id), hk = sk ? skillHoldK(i) : 0;
+      if (hk > 0.05) this.rect(x + 3, y + 9, Math.round((w - 6) * hk), 1, auto ? C.gold : C.cyan); // mantener: barra hasta cambiar de modo
+      this.text(x + 3, y, SKILL_LABEL[i], auto ? C.cyan : sk && rdy ? C.goldL : C.dim, { shadow: false });
       const sl = sk ? skLv(id) : 0, rom = sl ? ['', 'II', 'III', 'IV'][sl] : '';
-      this.text(x + 15, y, sk ? sk.name.toUpperCase().slice(0, Math.floor((w - 18 - (rom ? textWidth(rom) + 4 : 0)) / 6)) : '-', sk && rdy ? C.ink : C.dim, { shadow: false });
+      this.text(x + 15, y, sk ? sk.name.toUpperCase().slice(0, Math.floor((w - 18 - (rom ? textWidth(rom) + 4 : 0)) / 6)) : '-', auto ? C.cyan : sk && rdy ? C.ink : C.dim, { shadow: false });
       if (rom) this.text(x + w - 3, y, rom, rdy ? C.cyan : C.dim, { align: 'right', shadow: false }); // nivel de la habilidad
       if (!sk) return;
       if (!rdy) { const fw = Math.round((w - 6) * (1 - cd / p.skillMax[i])); this.rect(x + 3, y + 8, w - 6, 1, rgb(40, 30, 20)); this.rect(x + 3, y + 8, fw, 1, C.gold); }
