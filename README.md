@@ -41,3 +41,16 @@ Caminar contra una pared abre puertas, usa llaves y escaleras, y descubre pasadi
 ---
 
 **English:** a first-person dungeon-crawling roguelike in pixel art, inspired by *Daggerfall* and *Hexen*. Play in your browser (keyboard and mouse, controller or touch), works offline once loaded. Language can be switched in the options.
+
+---
+
+<details>
+<summary><b>🐄 Secreto (spoiler)</b></summary>
+
+Tras vencer al **Guardián** de una mazmorra, marca **arriba, arriba, abajo, abajo, izquierda, derecha, izquierda, derecha** y **ataca** (con WASD, las flechas, el stick del mando o el joystick del móvil). Delante de ti se abrirá un portal a **El Prado Maldito**: un prado bajo la mazmorra lleno de **vacas guerreras** que cargan en manada y **vacas magas** que lanzan orbes verdes desde lejos.
+
+Al fondo espera **EL REY VACA**, que embiste con fuerza. Si lo derrotas suelta dos tesoros de jefe y un buen puñado de oro. Hay un portal por mazmorra, otro portal te devuelve a donde estabas y en el prado no se guarda la partida.
+
+*Secret: after beating a dungeon's Guardian, input up, up, down, down, left, right, left, right and attack to open a portal to a meadow of armed cows and their King.*
+
+</details>
