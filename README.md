@@ -15,11 +15,24 @@ Entra en mazmorras de varios niveles generadas al azar, saquea cofres, encuentra
 | 1 2 3 / rueda | Cambiar de arma |
 | I · J · M | Inventario · Diario · Mapa |
 | H | Beber poción |
-| F · Clic der. | Escudo · Bloquear / esquivar |
+| F · Clic der. (mantener) | Alzar escudo · Bloquear / esquivar |
 | Shift | Esquivar |
 | P · N | Pausa y opciones · Sonido |
 
 **Con mando** (Xbox, PlayStation y genéricos) o **en el móvil** (en horizontal): joystick a la izquierda, desliza a la derecha para girar, y botones para atacar, esquivar, habilidades, pausa, diario, inventario y armas.
+
+## Jugabilidad
+
+- **Nueva partida**: elige modo **Normal** o **Pesadilla** (más duro, el doble de oro y sin objetos comunes), un **hándicap** opcional para ganar más oro y tu clase.
+- **Ataque automático** (opcional, en las opciones): con un enemigo a menos de 5 m la cámara apunta sola al más cercano y ataca cuando está a tu alcance. Si atacas o mueves la cámara, mandas tú; vuelve a apuntar 0,6 s después de soltar.
+- **Escudo**: con armas de una mano, `F` lo alza. Mantén clic derecho (o el botón del escudo en el móvil) para **bloquear** el 80% del daño de frente; atacar mientras bloqueas da un **golpe de escudo** que daña y empuja. En el móvil, arrastra desde el botón del escudo para caminar bloqueando.
+- **Esquiva**: un impulso invulnerable hacia donde te mueves. *Paso Sombrío* da hasta 3 cargas.
+- **Habilidades**: llevas 3 (`R` `C` `V`) y suben hasta el nivel IV (más daño, menos recarga y algo propio: más proyectiles, zonas mayores, más duración...). **Mantén una habilidad 2 s** y se pone en **azul**: modo automático, se lanza sola cuando está lista y hay enemigos a la vista. Otros 2 s la devuelven a manual.
+- **Almas de Guardián**: cada Guardián suelta una; con ellas evolucionas tu clase, aprendes sus habilidades más fuertes y las mejoras. Al absorberla eliges una ofrenda: su objeto, mejorar una habilidad o fragmentos y oro.
+- **Pociones**: curan la vida entera (`H`) y, si vas a morir con alguna encima, se beben solas. Se vuelven escasas si acumulas 5 o más.
+- **Enemigos**: aparecen más cuanto más tiempo pasas en una sala y llegan **oleadas** cada 2 minutos. Te rodean, algunos anuncian sus golpes con un círculo rojo y hay élites y chamanes. Un arco rojo junto a la mirilla indica de dónde viene cada golpe. Se miden contigo, así que siempre suponen un reto.
+- **Botín**: seis huecos de equipo (sin mochila). Lo que no quieras se recicla por oro y fragmentos, que el **herrero** usa para reforjar. La rareza mejora con cada mazmorra, y desde la 3.ª las mazmorras son más hondas y traen sorpresas.
+- **Antorchas**: sin luz solo ves la penumbra cercana; cada antorcha arde 4 minutos.
 
 Encontrarás un **mercader** y un **herrero** en cada mazmorra, **fantasmas rencorosos** de tus personajes caídos, jefes distintos según la zona, y la partida se guarda sola (CONTINUAR en el título).
 
