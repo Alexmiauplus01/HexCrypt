@@ -40,6 +40,8 @@ Encontrarás un **mercader** y un **herrero** en cada mazmorra, **fantasmas renc
 
 Caminar contra una pared abre puertas, usa llaves y escaleras, y descubre pasadizos secretos.
 
+**Privacidad:** la web cuenta visitas y algunos momentos de la partida (clase elegida, mazmorra alcanzada...) de forma anónima con [GoatCounter](https://www.goatcounter.com), sin cookies ni datos personales.
+
 ---
 
 <details>

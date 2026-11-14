@@ -340,7 +340,7 @@ function askExit() {
 function leaveDungeon() {
   const m = G.meta;
   G.bank += G.loot;
-  m.gold += G.loot; m.escapes++; m.bestLoot = Math.max(m.bestLoot, G.loot); m.bestDepth = Math.max(m.bestDepth, G.dg.n);
+  track('huida/mazmorra-' + G.dg.n); m.gold += G.loot; m.escapes++; m.bestLoot = Math.max(m.bestLoot, G.loot); m.bestDepth = Math.max(m.bestDepth, G.dg.n);
   saveMeta(); clearSave();
   G.final = { name: G.dg.name, loot: G.loot, bank: G.bank, n: G.dg.n, lvl: G.p.lvl, kills: G.kills, time: fmtTime(G.totalTime) };
   G.state = 'escaped'; Sfx.play('portal');
@@ -351,7 +351,7 @@ function nextDungeon(nightmare) {
   openPacts(() => {
     G.nightmare = !!nightmare || !!G.runNight; // en una partida en pesadilla, todas las mazmorras lo son
     p.hp = p.maxHp; G.flashFx = 1;
-    newDungeon(n);
+    newDungeon(n); track('mazmorra/' + n);
     G.state = 'play'; lockMouse();
     if (G.nightmare) { toast('MODO PESADILLA', true); logMsg('Pesadilla: enemigos más duros, el doble de oro y botín sin objetos comunes', C.red); }
     saveRun();
@@ -509,6 +509,7 @@ function die() {
   G.state = 'dead';
   Sfx.play('die'); Sfx.stopMusic();
   if (document.exitPointerLock) document.exitPointerLock();
+  track('muerte/mazmorra-' + G.dg.n); { const b = Math.floor(G.p.lvl / 10) * 10; track('muerte/nivel-' + (b ? b + '-' + (b + 9) : '1-9')); }
   const m = G.meta; m.deaths++; saveMeta();
   recordGhost(); clearSave();
   G.final = { name: G.dg.name, lost: G.loot, bank: G.bank, n: G.dg.n, lvl: G.p.lvl, kills: G.kills, time: fmtTime(G.totalTime) };
@@ -680,7 +681,7 @@ function comboTick() {
 function openSecretPortal() {
   if (!G.guardianDown || G.secretOpen || G.z === SECRET_Z) return;
   const a = aimPos(2.2);
-  G.secretOpen = true;
+  G.secretOpen = true; track('secreto/portal');
   G.pickups.push({ type: 'portal', x: a.x, y: a.y, t: 0 });
   toast('¡UN PORTAL SE ABRE!', true); logMsg('Huele a hierba... y a algo más', C.green);
   Sfx.play('portal'); G.flashFx = 0.8; G.shake = Math.max(G.shake, 0.4);
@@ -905,7 +906,7 @@ function dgXpMul() { return Math.pow(XP_TIER, Math.max(0, Math.min(((G.dg && G.d
 function addXp(v) {
   const p = G.p;
   p.xp += v * p.xpMul * dgXpMul();
-  while (p.xp >= xpNeed(p.lvl)) { p.xp -= xpNeed(p.lvl); p.lvl++; G.pending++; }
+  while (p.xp >= xpNeed(p.lvl)) { p.xp -= xpNeed(p.lvl); p.lvl++; G.pending++; if (p.lvl % 10 === 0) track('nivel/' + p.lvl); }
   if (canEvolve()) G.evolveReady = true;
   if (G.pending > 0 && G.state === 'play') openLevelUp();
 }
@@ -1046,7 +1047,7 @@ function classCard(id) {
 function openClassSelect() {
   G.state = 'classselect'; mouse.fire = false;
   if (document.exitPointerLock) document.exitPointerLock();
-  G.choice = { title: 'ELIGE TU CAMINO', sub: 'Evolucionarás en los niveles 20 y 40', items: BASE_CLASSES.map(classCard), pick: (i) => { newRun(BASE_CLASSES[i]); lockMouse(); } };
+  G.choice = { title: 'ELIGE TU CAMINO', sub: 'Evolucionarás en los niveles 20 y 40', items: BASE_CLASSES.map(classCard), pick: (i) => { newRun(BASE_CLASSES[i]); track('clase/' + BASE_CLASSES[i]); lockMouse(); } };
 }
 function openEvolve() {
   const p = G.p, c = CLASSES[p.cls];
@@ -1056,7 +1057,7 @@ function openEvolve() {
   if (document.exitPointerLock) document.exitPointerLock();
   Sfx.play('portal');
   G.choice = { title: '¡EVOLUCIÓN!', sub: `${c.name} alcanza el nivel ${p.lvl}: elige tu destino`, items: c.to.map(classCard), pick: (i) => {
-    const id = c.to[i]; setClass(id, true); G.choice = null;
+    const id = c.to[i]; setClass(id, true); G.choice = null; track('evolucion/' + id);
     const ns = CLASSES[id].skills.find(s => !p.known.includes(s)); // la nueva clase te enseña su primera habilidad
     const done = () => { G.state = 'play'; lockMouse(); };
     G.state = 'play';
@@ -1526,7 +1527,7 @@ function optAction(id) {
   // nueva partida desde la pausa: el primer toque pide confirmación y el segundo (antes de 3 s) empieza de cero
   if (id === 'newrun') { if (G.newAsk && G.time - G.newAsk < 3) { G.newAsk = 0; clearSave(); startRun(); } else { G.newAsk = G.time; Sfx.play('locked'); } return; }
   if (id === 'installclose') { G.installHelp = null; return; }
-  if (id === 'install') { // el aviso propio del navegador si lo ofrece; si no, cómo hacerlo en este dispositivo
+  if (id === 'install') { track('app/boton-descargar'); // el aviso propio del navegador si lo ofrece; si no, cómo hacerlo en este dispositivo
     if (G.installEvt) { const ev = G.installEvt; G.installEvt = null; ev.prompt(); }
     else G.installHelp = { state: G.state, t: performance.now() };
     return;
@@ -1570,9 +1571,9 @@ function openModeSelect() {
 }
 function chooseMode(i) {
   if (G.state !== 'mode' || !RUN_MODES[i]) return;
-  G.startCfg = { nightmare: RUN_MODES[i].id === 'pesadilla' };
+  G.startCfg = { nightmare: RUN_MODES[i].id === 'pesadilla' }; track('modo/' + RUN_MODES[i].id);
   Sfx.play('shrine');
-  openPacts(() => { G.startCfg.pact = G.pact; G.pact = null; openClassSelect(); });
+  openPacts(() => { track('handicap/' + (G.pact || 'ninguno')); G.startCfg.pact = G.pact; G.pact = null; openClassSelect(); });
 }
 
 // Bucle con límite de fotogramas (60 o 30, a elegir en opciones): se salta los refrescos que sobran
@@ -1640,7 +1641,7 @@ function installSteps() {
   if (/Firefox/.test(ua)) return 'FIREFOX NO INSTALA APPS EN EL ORDENADOR. ABRE EL JUEGO EN CHROME O EDGE Y PULSA EL ICONO DE INSTALAR DE LA BARRA DE DIRECCIONES.';
   return 'PULSA EL ICONO DE INSTALAR DE LA BARRA DE DIRECCIONES O, EN EL MENÚ DEL NAVEGADOR, ELIGE INSTALAR HEXCRYPT. SI YA LA INSTALASTE, ÁBRELA DESDE TUS APLICACIONES.';
 }
-window.addEventListener('appinstalled', () => { G.installEvt = null; freshAppCache('instalada'); });
+window.addEventListener('appinstalled', () => { G.installEvt = null; track('app/instalada'); freshAppCache('instalada'); });
 // Al terminar de instalarse como app se borran los archivos guardados del juego y el service worker los vuelve a
 // bajar. Las partidas (localStorage) no se tocan. (Antes también se hacía al abrirla por primera vez: se quitó,
 // porque borraba la caché mientras cargaba y dejaba las siguientes aperturas descargando todo de nuevo.)

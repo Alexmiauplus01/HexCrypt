@@ -337,6 +337,7 @@ function killEnemy(e) {
 
 function onBossDead(e) {
   G.boss = null;
+  track(G.z === SECRET_Z ? 'secreto/rey-vaca' : 'guardian/mazmorra-' + G.dg.n);
   if (G.z !== SECRET_Z) { G.guardianDown = true; G.pickups.push({ type: 'soul', x: e.x, y: e.y - 0.6, t: 0, boss: e.type }); } // portal secreto y Alma de Guardián (al absorberla se elige la recompensa)
   else { G.cowDown = true; dropItem('boss', e.x - 0.4, e.y, {}); G.pickups.push({ type: 'gold', x: e.x, y: e.y + 0.5, v: 120 * G.floor, t: 0 }); jot('cow' + G.dg.n, 'Encontré un prado bajo la mazmorra, lleno de vacas armadas. Derroté a su rey. Nadie me va a creer.'); }
   if (G.z === SECRET_Z) dropItem('boss', e.x + 0.4, e.y, { boss: e.type }); // el Guardián ofrece su tesoro al absorber el alma
