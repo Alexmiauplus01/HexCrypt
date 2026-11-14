@@ -1525,7 +1525,12 @@ function optAction(id) {
   const o = G.cfg;
   // nueva partida desde la pausa: el primer toque pide confirmación y el segundo (antes de 3 s) empieza de cero
   if (id === 'newrun') { if (G.newAsk && G.time - G.newAsk < 3) { G.newAsk = 0; clearSave(); startRun(); } else { G.newAsk = G.time; Sfx.play('locked'); } return; }
-  if (id === 'install' && G.installEvt) { const ev = G.installEvt; G.installEvt = null; ev.prompt(); return; }
+  if (id === 'installclose') { G.installHelp = null; return; }
+  if (id === 'install') { // el aviso propio del navegador si lo ofrece; si no, cómo hacerlo en este dispositivo
+    if (G.installEvt) { const ev = G.installEvt; G.installEvt = null; ev.prompt(); }
+    else G.installHelp = { state: G.state, t: performance.now() };
+    return;
+  }
   if (id === 'sens-') o.sens = Math.max(0.3, Math.round((o.sens - 0.1) * 10) / 10);
   if (id === 'sens+') o.sens = Math.min(3, Math.round((o.sens + 0.1) * 10) / 10);
   if (id === 'vol-') o.vol = Math.max(0, Math.round((o.vol - 0.1) * 10) / 10);
@@ -1623,6 +1628,18 @@ if (document.readyState === 'complete') setTimeout(boot, 0); else window.addEven
 // Juego sin conexión: el service worker solo existe en la web publicada (no al abrir el archivo en local)
 // instalar como app: el navegador avisa de que se puede y la opción aparece en el menú de opciones
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); G.installEvt = e; });
+// ¿ya estamos dentro de la app instalada?
+function isAppMode() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+// la ventana de ayuda solo en la pantalla donde se abrió y como mucho 30 s (si sales con Esc no reaparece después)
+function installHelpOn() { const h = G.installHelp; return !!h && h.state === G.state && performance.now() - h.t < 30000; }
+function installSteps() {
+  const ua = navigator.userAgent || '';
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios) return 'TOCA EL BOTÓN DE COMPARTIR DEL NAVEGADOR (EL CUADRADO CON LA FLECHA) Y ELIGE AÑADIR A LA PANTALLA DE INICIO.';
+  if (/Android/.test(ua)) return 'ABRE EL MENÚ DEL NAVEGADOR (LOS TRES PUNTOS) Y ELIGE INSTALAR APLICACIÓN O AÑADIR A LA PANTALLA DE INICIO.';
+  if (/Firefox/.test(ua)) return 'FIREFOX NO INSTALA APPS EN EL ORDENADOR. ABRE EL JUEGO EN CHROME O EDGE Y PULSA EL ICONO DE INSTALAR DE LA BARRA DE DIRECCIONES.';
+  return 'PULSA EL ICONO DE INSTALAR DE LA BARRA DE DIRECCIONES O, EN EL MENÚ DEL NAVEGADOR, ELIGE INSTALAR HEXCRYPT. SI YA LA INSTALASTE, ÁBRELA DESDE TUS APLICACIONES.';
+}
 window.addEventListener('appinstalled', () => { G.installEvt = null; freshAppCache('instalada'); });
 // Al terminar de instalarse como app se borran los archivos guardados del juego y el service worker los vuelve a
 // bajar. Las partidas (localStorage) no se tocan. (Antes también se hacía al abrirla por primera vez: se quitó,

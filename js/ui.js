@@ -264,7 +264,7 @@ class UI {
       ['toggle', 'BOTONES TÁCTILES', o.bigTouch ? 'GRANDES' : 'NORMALES', 'bigtouch'],
       ['toggle', 'CONTROLES', '>', 'controls'],
     ];
-    if (G.installEvt) rows.push(['toggle', 'INSTALAR COMO APP', '>', 'install']); // solo si el navegador lo ofrece
+    if (!isAppMode()) rows.push(['toggle', 'DESCARGAR APP', '>', 'install']); // dentro de la app ya instalada no hace falta
     if (G.state === 'paused') rows.push(['toggle', 'NUEVA PARTIDA', G.newAsk && G.time - G.newAsk < 3 ? '¿SEGURO?' : '>', 'newrun']);
     if (typeof LANGS !== 'undefined') rows.splice(4, 0, ['toggle', 'IDIOMA', o.lang === 'en' ? 'ENGLISH' : 'ESPAÑOL', 'lang']);
     const rh = rows.length > 15 ? 11 : 12; // con muchas filas (pausa), un poco más juntas para que quepa todo
@@ -284,7 +284,19 @@ class UI {
         this.text(x + w - 39, yy, val, hot ? C.goldL : C.gold, { align: 'center' });
       }
     });
+    if (installHelpOn()) this.installHelp(G);
     return rows.length * rh + 20;
+  }
+  // Cómo instalar la app cuando el navegador no ofrece su propio aviso (iPhone, Firefox, ya descartado...): cualquier toque lo cierra
+  installHelp(G) {
+    const w = 260, x = Math.round(VX + (VW - w) / 2), lines = wrapText(String(tr(installSteps())).toUpperCase(), Math.floor((w - 16) / 6));
+    const h = 44 + lines.length * 10, y = Math.round(VY + Math.max(8, (VH - h) / 2));
+    this.darken(VX, VY, VW, VH, 0.3); // lo de detrás casi apagado
+    this.darken(x, y, w, h, 0.15); this.panel(x, y, w, h, true); // caja opaca con filete dorado
+    this.text(x + w / 2, y + 6, 'DESCARGAR APP', C.gold, { align: 'center', grad: GOLD_GRAD });
+    lines.forEach((l, i) => this.text(x + w / 2, y + 22 + i * 10, l, C.ink, { align: 'center', shadow: false }));
+    this.text(x + w / 2, y + h - 12, G.touchMode ? 'TOCA PARA CERRAR' : 'HAZ CLIC PARA CERRAR', C.dim, { align: 'center', shadow: false });
+    this.hot.length = 0; this.hot.push({ x: VX, y: VY, w: VW, h: VH, id: 'installclose' });
   }
   // Reasignar controles: columna de teclado y columna de mando; al elegir una casilla se espera la tecla o el botón
   controls(G) {
