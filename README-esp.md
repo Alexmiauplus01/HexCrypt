@@ -1,4 +1,4 @@
-# CRYPTFALL
+# HexCrypt
 
 🇬🇧 *English version: [README-eng.md](README-eng.md)*
 
