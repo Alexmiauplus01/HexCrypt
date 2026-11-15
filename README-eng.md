@@ -2,7 +2,7 @@
 
 🇪🇸 *Versión en español: [README-esp.md](README-esp.md)*
 
-A first-person roguelike with a pixel-art look in the style of *Daggerfall* / *Hexen*. It runs in your browser, nothing to install, and works offline once loaded. The language can be switched in the options.
+A first-person orthopedic roguelike with a pixel-art look in the style of *Daggerfall* / *Hexen*. It runs in your browser, nothing to install, and works offline once loaded. The language can be switched in the options.
 
 **▶ Play:** https://alexmiauplus01.github.io/HexCrypt/
 
