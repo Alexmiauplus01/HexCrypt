@@ -2,7 +2,7 @@
 
 🇬🇧 *English version: [README-eng.md](README-eng.md)*
 
-Roguelike en primera persona con estética pixel art al estilo *Daggerfall* / *Hexen*. Se juega en el navegador, sin instalar nada.
+Roguelike ortopédico en primera persona con estética pixel art al estilo *Daggerfall* / *Hexen*. Se juega en el navegador, sin instalar nada.
 
 **▶ Jugar:** https://alexmiauplus01.github.io/HexCrypt/
 
