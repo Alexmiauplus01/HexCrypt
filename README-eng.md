@@ -40,6 +40,8 @@ You will find a **merchant** and a **blacksmith** in every dungeon, **vengeful g
 
 Walking into a wall opens doors, uses keys and stairs, and reveals secret passages.
 
+What do you think? Tell us with **GIVE FEEDBACK** on the title screen or in the game options.
+
 **Privacy:** the site counts visits and a few game moments (chosen class, dungeon reached...) anonymously with [GoatCounter](https://www.goatcounter.com), with no cookies or personal data.
 
 ---

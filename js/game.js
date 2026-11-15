@@ -1434,7 +1434,7 @@ function handleClick(x, y, button = 0) {
   ui.mouse.x = x; ui.mouse.y = y;
   const e = { button };
   switch (G.state) {
-    case 'title': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h && h.id === 'options') G.state = 'options'; else if (h && h.id === 'continue') loadRun(); else if (h && h.id === 'new') startRun(); else if (e.button === 0 && !hasSave()) startRun(); break; }
+    case 'title': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h && h.id === 'options') G.state = 'options'; else if (h && h.id === 'feedback') openFeedback(); else if (h && h.id === 'continue') loadRun(); else if (h && h.id === 'new') startRun(); else if (e.button === 0 && !hasSave()) startRun(); break; }
     case 'controls': {
       const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h));
       if (!h) { G.state = G.ctlBack || 'title'; G.rebind = null; break; }
@@ -1526,6 +1526,7 @@ function optAction(id) {
   const o = G.cfg;
   // nueva partida desde la pausa: el primer toque pide confirmación y el segundo (antes de 3 s) empieza de cero
   if (id === 'newrun') { if (G.newAsk && G.time - G.newAsk < 3) { G.newAsk = 0; clearSave(); startRun(); } else { G.newAsk = G.time; Sfx.play('locked'); } return; }
+  if (id === 'feedback') { openFeedback(); return; }
   if (id === 'installclose') { G.installHelp = null; return; }
   if (id === 'install') { track('app/boton-descargar'); // el aviso propio del navegador si lo ofrece; si no, cómo hacerlo en este dispositivo
     if (G.installEvt) { const ev = G.installEvt; G.installEvt = null; ev.prompt(); }
