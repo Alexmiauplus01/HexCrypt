@@ -156,7 +156,7 @@ const EN_DATA = {
     estallido: ['Burst', (l) => `Enemies you kill explode (radius ${(1.4 + 0.3 * l).toFixed(1)})`], filo: ['Tempered edge', (l) => `+${20 * l}% damage`],
     rapidez: ['Balance', (l) => `+${12 * l}% attack speed`], critico: ['Honed edge', (l) => `+${8 * l}% critical chance`],
   },
-  shop: { torch: ['Torch', `Burns for 4 minutes`], potion: ['Health potion', 'Heals half your health (H)'], map: ['Map scroll', 'Reveals the level you are on'], rune: ['Return rune', 'Takes you back to the exit'] },
+  shop: { torch: ['Torch', `Burns for 4 minutes`], potion: ['Health potion', 'Restores all your health (H)'], map: ['Map scroll', 'Reveals the level you are on'], rune: ['Return rune', 'Takes you back to the exit'] },
   rarity: { comun: 'Common', raro: 'Rare', epico: 'Epic', legendario: 'Legendary' },
   affix: {
     anillo: [['of wrath', (x) => `+${Math.round(x * 100)}% damage`], ['of the hawk', (x) => `+${Math.round(x * 100)}% crit chance`], ['of the wind', (x) => `+${Math.round(x * 100)}% attack speed`]],

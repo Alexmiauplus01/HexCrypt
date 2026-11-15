@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------- Mercader
 const SHOP_ITEMS = [
   { id: 'torch', name: 'Antorcha', desc: `Arde ${TORCH_FUEL / 60} minutos`, base: 14 },
-  { id: 'potion', name: 'Poción de vida', desc: 'Cura la mitad de tu vida (H)', base: 26 },
+  { id: 'potion', name: 'Poción de vida', desc: 'Cura toda tu vida (H)', base: 26 },
   { id: 'map', name: 'Pergamino de mapa', desc: 'Revela el nivel en el que estás', base: 32 },
   { id: 'rune', name: 'Runa de regreso', desc: 'Te devuelve a la salida', base: 60 },
 ];

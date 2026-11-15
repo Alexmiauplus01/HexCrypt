@@ -247,7 +247,8 @@ function reforgeItem(slot) {
   G.wskin = null; recalc(); Sfx.play('unlock'); G.flashFx = 0.3;
   logMsg(`El herrero reforja ${itemName(it).toLowerCase()}: ${itemLines(it).join(' · ')}`, C.orange);
 }
-function recycleValue(it) { return Math.round(({ comun: 12, raro: 30, epico: 70, legendario: 160 }[it.rar] || 12) * (1 + 0.3 * ((G.dg ? G.dg.n : 1) - 1)) * lootMul()); }
+// reciclar da sobre todo fragmentos; el oro es una propina (antes daba ~3 veces más y sobraba para el herrero)
+function recycleValue(it) { return Math.max(1, Math.round(({ comun: 4, raro: 10, epico: 24, legendario: 55 }[it.rar] || 4) * (1 + 0.2 * ((G.dg ? G.dg.n : 1) - 1)) * lootMul())); }
 function resolveSwap(slot) {
   const S = G.swap; if (!S) return;
   if (slot === 'recycle') {
