@@ -13,7 +13,7 @@ const ELITE_AFFIX = {
 const NO_ELITE = new Set(['worm', 'ghost', 'shaman']);
 function eliteChance() {
   const n = G.dg ? G.dg.n : 1;
-  return Math.min(0.3, (0.04 + 0.01 * (n - 1)) * (G.pact === 'elites' ? 3 : 1) * (G.nightmare ? 1.6 : 1));
+  return Math.min(0.3, (0.04 + 0.01 * (n - 1)) * (G.pact === 'elites' ? 3 : 1) * (G.nightmare ? 1.8 : 1));
 }
 function maybeElite(e) {
   if (G.noElite || e.def.boss || NO_ELITE.has(e.type) || Math.random() >= eliteChance()) return;
@@ -147,7 +147,7 @@ const PACTS = {
 };
 function lootMul() { return (1 + (G.pact && PACTS[G.pact] ? PACTS[G.pact].bonus : 0)) * (G.nightmare ? 2 : 1); }
 function healMul() { return G.pact === 'sangre' ? 0.5 : 1; }
-function waveEvery() { return G.pact === 'horda' ? 80 : 120; }
+function waveEvery() { return G.pact === 'horda' ? (G.nightmare ? 70 : 80) : (G.nightmare ? 100 : 120); } // pesadilla: oleadas más seguidas
 // rareza: con pacto o pesadilla, a veces se vuelve a tirar y se queda la mejor
 const RAR_ORDER = ['comun', 'raro', 'epico', 'legendario'];
 function luckyRarity(src, rar) {

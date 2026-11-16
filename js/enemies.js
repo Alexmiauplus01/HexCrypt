@@ -117,7 +117,7 @@ function spawnEnemy(type, x, y) {
     dmgM: (1 + 0.14 * diff) * sc.dmg, atk: rand(0, 0.6), flash: 0, slow: 0, shoot: rand(0.8, 2), los: false, losT: 0,
     wob: rand(0, TAU), bladeCd: 0, kx: 0, ky: 0, ring: 6, walk: rand(0, 2),
   };
-  if (G.nightmare && type !== 'ghost') { e.hp *= 1.5; e.maxHp *= 1.5; e.dmgM *= 1.25; }
+  if (G.nightmare && type !== 'ghost') { e.hp *= 1.65; e.maxHp *= 1.65; e.dmgM *= 1.35; e.spd *= 1.08; } // pesadilla: más duros, más fuertes y algo más rápidos
   if (G.pact === 'prisa') e.spd *= 1.2;
   if (d.dmg > 0 && !d.ranged && !d.boss && Math.random() < 0.65) e.flank = (Math.random() < 0.5 ? -1 : 1) * rand(0.7, 1.3); // se abre hacia un flanco
   maybeElite(e);

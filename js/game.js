@@ -1564,7 +1564,7 @@ function startRun() {
 // mazmorra, más oro y botín), 3) clase. newRun aplica lo elegido (G.startCfg).
 const RUN_MODES = [
   { id: 'normal', name: 'Normal', desc: 'Difícil pero justo: la experiencia pensada para el juego.' },
-  { id: 'pesadilla', name: 'Pesadilla', desc: 'Toda la partida: enemigos con +50% de vida y +25% de daño y más élites. A cambio, el doble de oro y botín sin objetos comunes.' },
+  { id: 'pesadilla', name: 'Pesadilla', desc: 'Toda la partida: enemigos con +65% de vida y +35% de daño, algo más rápidos, más élites y oleadas más seguidas. A cambio, el doble de oro y botín sin objetos comunes.' },
 ];
 function openModeSelect() {
   G.state = 'mode'; mouse.fire = false; G.startCfg = {};
