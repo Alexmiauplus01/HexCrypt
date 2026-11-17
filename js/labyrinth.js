@@ -23,7 +23,7 @@ const LAB_RIDDLES = [
 ];
 const labEN = () => typeof LANG !== 'undefined' && LANG === 'en';
 DECOR.tablet = { h: 0.62 };
-ENEMY.minotaur = { name: 'Minotauro', hp: 300, spd: 1.7, dmg: 24, r: 0.5, h: 1.45, z: 0, spr: 'minotaur', xp: 30, mini: true, charge: { cd: 5, mul: 2.6, dur: 1.0, min: 2.5, max: 9 } };
+ENEMY.minotaur = { name: 'Minotauro', hp: 300, spd: 1.7, dmg: 24, r: 0.45, stop: 0.7, h: 0.85, z: 0, spr: 'minotaur', xp: 30, mini: true, charge: { cd: 5, mul: 2.6, dur: 1.0, min: 2.5, max: 9 } };
 SLAM.minotaur = 1;
 
 // ---------------------------------------------------------------- generación (antes de pintar el nivel)

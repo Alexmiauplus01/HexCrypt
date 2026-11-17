@@ -11,7 +11,7 @@ const ENEMY = {
   slime:    { name: 'Slime', hp: 46, spd: 1.0, dmg: 12, r: 0.38, h: 0.5, z: 0, spr: 'slime', xp: 3 },
   wraith:   { name: 'Espectro', hp: 22, spd: 1.5, dmg: 0, r: 0.3, h: 0.85, z: 0.06, spr: 'wraith', xp: 3, ranged: { cd: 2.6, dmg: 11, spd: 4.2, proj: 'orbGreen', keep: 5.5 } },
   imp:      { name: 'Diablillo', hp: 34, spd: 2.2, dmg: 8, r: 0.3, h: 0.6, z: 0, spr: 'imp', xp: 4, ranged: { cd: 2.0, dmg: 12, spd: 6, proj: 'orbRed', keep: 3.5 } },
-  ghost:    { name: 'Fantasma', hp: 200, spd: 2.1, dmg: 12, r: 0.3, h: 0.88, z: 0.05, spr: 'ghost_melee', xp: 15, elite: true },
+  ghost:    { name: 'Fantasma', hp: 200, spd: 2.1, dmg: 12, r: 0.3, stop: 0.42, h: 0.68, z: 0.05, spr: 'ghost_melee', xp: 15, elite: true },
   zombie:   { name: 'Necrófago', hp: 58, spd: 1.0, dmg: 14, r: 0.32, h: 0.8, z: 0, spr: 'zombie', xp: 3 },
   cultist:  { name: 'Acólito', hp: 30, spd: 1.6, dmg: 0, r: 0.3, h: 0.82, z: 0, spr: 'cultist', xp: 4, ranged: { cd: 2.3, dmg: 12, spd: 6, proj: 'orbPurple', keep: 5 } },
   spider:   { name: 'Araña', hp: 16, spd: 3.1, dmg: 7, r: 0.3, h: 0.52, z: 0, spr: 'spiderE', xp: 2 },
@@ -410,7 +410,7 @@ function updateEnemies(dt) {
       const nax = ax - ay * w, nay = ay + ax * w; ax = nax; ay = nay;
     }
     // los de cuerpo a cuerpo se plantan delante del jugador en vez de meterse en él
-    const stop = d.r + PLAYER_R;
+    const stop = (d.stop || d.r) + PLAYER_R; // stop: se plantan más lejos sin ocupar más (minotauro, fantasmas)
     if (!ally && !e.fleeT && dist < stop + 0.08 && ax * dx + ay * dy > 0) spd = 0;
     const ox = e.x, oy = e.y;
     lv.move(e, ax * spd * dt + e.kx * dt, ay * spd * dt + e.ky * dt, Math.min(d.r, 0.3));
@@ -424,7 +424,7 @@ function updateEnemies(dt) {
       if (ally && ad < d.r + ally.def.r + 0.45) {
         ally.hp -= d.dmg * e.dmgM; ally.flash = 0.1; e.atk = 0.9;
         if (ally.hp <= 0) allyKill(ally);
-      } else if (dist < d.r + 0.5 && !hidden) {
+      } else if (dist < (d.stop || d.r) + 0.5 && !hidden) {
         const hp0 = p.hp;
         hurtPlayer(Math.round(d.dmg * e.dmgM * (e.crit && Math.random() < e.crit ? 2 : 1)), e.x, e.y); e.atk = d.atkCd || (d.boss ? 1.1 : 0.9);
         if (d.bite && p.hp < hp0) { p.poisT = Math.max(p.poisT || 0, d.bite.poison); p.poisDps = d.bite.dps * e.dmgM; }
