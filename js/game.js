@@ -214,7 +214,7 @@ function populateLevel(lv) {
       case 'secreta': box = chest(gold * rand(6, 10), 'potion'); break;
       case 'trampa': box = chest(gold * rand(5, 8)); break;
       case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': case 'palancas': case 'balanza': case 'campanas': case 'copas': case 'braseros': break;
-      case 'baldosas': P.push({ type: 'chest', x: r.cx + 0.5, y: r.cy + 0.5, t: 0, gold: Math.round(gold * rand(12, 18)), item: 'potion', eqItem: makeItem('vault', null, { rar: Math.random() < 0.5 ? 'legendario' : 'epico' }), trial: 'baldosas' }); used.add(r.cy * MW + r.cx); break;
+      case 'baldosas': { const T = r.puzzle; if (T && T.final === false && T.nextNote) P.push({ type: 'note', x: r.cx + 0.5, y: r.cy + 0.5, t: 0, note: T.nextNote, trial: 'baldosas' }); else P.push({ type: 'chest', x: r.cx + 0.5, y: r.cy + 0.5, t: 0, gold: Math.round(gold * rand(14, 20)), item: 'potion', eqItem: makeItem('vault', null, { rar: 'legendario' }), trial: 'baldosas' }); used.add(r.cy * MW + r.cx); break; }
       case 'biblioteca': // saber antiguo: experiencia en gemas y algún erudito corrupto
         for (let k = 0; k < randi(2, 4); k++) { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'gem', x, y, v: 5, vx: 0, vy: 0, t: rand(0, 6) }); }
         foes(randi(1, 2), 'cultist'); if (Math.random() < 0.35) box = chest(gold * rand(3, 5));
@@ -1248,6 +1248,7 @@ function update(dt) {
 function buildItems() {
   const items = [];
   if (SPR.pixReady && !puzzleArt.final && G.lv) puzzleArt(G.lv); // estatuas definitivas en cuanto cargan los sprites
+  if (SPR.pixReady && !chainArt.objs && G.lv) chainArt(G.lv); // objetos de las pruebas de Pixellab
   const tm = G.time;
   for (const d of G.decor) {
     const def = DECOR[d.type], fr = SPR[d.type];

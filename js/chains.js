@@ -35,29 +35,35 @@ ROOM_NAME.braseros = 'sala de los braseros'; ROOM_HINT.braseros = 'Braseros apag
 // qué dos pruebas tocan en la mazmorra n de esta partida
 function trialsFor(n) {
   const D = (typeof G !== 'undefined' && Array.isArray(G.trialDeck) && G.trialDeck.length === TRIALS.length) ? G.trialDeck : TRIALS;
-  const k = (2 * (n - 1)) % D.length;
-  return [D[k], D[(k + 1) % D.length]];
+  const k = (3 * (n - 1)) % D.length;
+  return [D[k], D[(k + 1) % D.length], D[(k + 2) % D.length]];
 }
 function newTrialDeck() { return TRIALS.slice().sort(() => Math.random() - 0.5); }
 
 // ---------------------------------------------------------------- generación (desde Dungeon.build, paso 5c)
+// tres pruebas en cadena: las notas del mapa llevan a la primera; al superarla aparece un pergamino con la pista de la
+// segunda, y al superar esta, el de la tercera, la única con el tesoro (cofre y legendario)
 function planTrials(dg) {
   const z0 = dg.start ? dg.start.z : 0, used = new Set(), done = [];
   const queue = (dg.trials || trialsFor(dg.n)).slice(), spare = TRIALS.filter(t => !queue.includes(t) && t !== 'laberinto').sort(() => Math.random() - 0.5);
-  while (done.length < 2 && (queue.length || spare.length)) {
+  while (done.length < 3 && (queue.length || spare.length)) {
     const kind = queue.length ? queue.shift() : spare.shift();
     let trial = null;
     if (kind === 'estatuas') trial = planStatues(dg, z0);
-    else if (kind === 'laberinto') { const z = dg.zs.find(z => dg.levels[z].maze); trial = z !== undefined ? { z, r: null } : null; }
+    else if (kind === 'laberinto') { const z = dg.zs.find(z => dg.levels[z].maze); trial = z !== undefined ? { z, r: null, maze: dg.levels[z].maze } : null; }
     else if (kind === 'baldosas') trial = planTiles(dg, z0);
     else if (kind === 'copas') trial = planCups(dg, z0);
     else trial = planVaultRoom(dg, z0, kind);
     if (!trial) continue;
     if (trial.r) used.add(trial.r);
-    placeChainNotes(dg, kind, trial, z0, used);
-    done.push(kind);
+    trial.kind = kind; done.push(trial);
   }
-  dg.trials = done;
+  done.forEach((t, i) => {
+    const T = t.maze || t.r.puzzle, nx = done[i + 1];
+    T.step = i; T.final = !nx; T.nextNote = nx ? bundleText(nx.kind, nx) : null;
+  });
+  if (done.length) placeChainNotes(dg, done[0].kind, done[0], z0, used);
+  dg.trials = done.map(t => t.kind);
 }
 // tres notas: la primera en el nivel de entrada; las otras dos donde caigan (mejor en niveles distintos)
 function placeChainNotes(dg, kind, trial, z0, used) {
@@ -305,6 +311,38 @@ function chainTexts(kind, trial, zs) {
       'Ilsa: encender con la antorcha solo los braseros que marca el mural, de izquierda a derecha mirándolo.', 'Ilsa: light with the torch only the braziers the mural marks, left to right as you face it.'),
   ];
 }
+function bundleText(kind, trial) {
+  const zT = trial.z, LT = lvEs(zT), ET = lvEn(zT), P = trial.r ? trial.r.puzzle : null;
+  const T = {
+    estatuas: () => { const b = puzBeast(trial.broken); return [['Páginas sueltas del diario de Aldric.', null, `Tres estatuas en el ${LT}; los murales repiten la criatura buena.`, `Rompimos ${b.art} ${b.es}... y algo terrible nos siguió.`], ["Loose pages from Aldric's journal.", null, `Three statues on ${ET}; the murals repeat the right creature.`, `We broke the ${b.en}... and something terrible followed us.`]]; },
+    palancas: () => { const o = P.order.map(k => LEVER_SYMS[k]); return [['Páginas del ingeniero Brannoc.', null, `Su cámara está en el ${LT}: tres palancas, llama, copo y rayo.`, `Primero ${o[0].clue.es}, después ${o[1].clue.es} y al final ${o[2].clue.es}. Si se equivoca el orden, el suelo muerde.`], ['Pages of Brannoc the engineer.', null, `His vault is on ${ET}: three levers, flame, snowflake and lightning.`, `First ${o[0].clue.en}, then ${o[1].clue.en} and at the end ${o[2].clue.en}. Get the order wrong and the floor bites.`]]; },
+    balanza: () => [['Cuentas de la mercader Ysolde.', null, `La balanza del ${LT} pide ${P.bags} bolsas de ${P.unit} monedas.`, 'Ni una menos; y lo que sobre, también se lo queda.'], ['Ledger of Ysolde the merchant.', null, `The scales on ${ET} ask for ${P.bags} bags of ${P.unit} coins.`, 'Not one less; and whatever is left over, they keep too.']],
+    laberinto: () => [['Mapa de Teodric, cartógrafo.', null, `Hay un laberinto en el ${LT}; una bestia con cuernos guarda su entrada.`, 'La tablilla plantea un acertijo y la respuesta es un símbolo. Si fallas, las puertas cambian.'], ['Map of Teodric the cartographer.', null, `There is a labyrinth on ${ET}; a horned beast guards its entrance.`, 'The tablet poses a riddle and the answer is a symbol. If you fail, the doors change.']],
+    campanas: () => [['Cuaderno de Mirela, campanera de la reina.', null, `La caja de música está en el ${LT}. Las campanas deben repetir su canción; cada una brilla al sonar.`, 'Una nota fuera de lugar despierta a los guardianes.'], ["Notebook of Mirela, the queen's bell-ringer.", null, `The music box is on ${ET}. The bells must repeat its song; each one glows as it rings.`, 'A note out of place wakes the guardians.']],
+    baldosas: () => { const s = TILE_SYMS[P.safe]; return [['Diario de Oswin, aprendiz de albañil.', null, `La sala de las losas está en el ${LT}.`, `Pisa solo las losas con ${s.es}. Mi maestro pisó otra.`], ["Diary of Oswin, a mason's apprentice.", null, `The tile room is on ${ET}.`, `Step only on the tiles with ${s.en}. My master stepped on another.`]]; },
+    copas: () => { const g = CUPS[P.good], b = CUPS[P.bad]; return [['Confesión de Varek, copero del rey.', null, `El altar está en el ${LT}. ${cap(b.es)} mató al príncipe; el rey bebió de ${g.es} y vivió.`, 'La tercera solo tiene agua rancia.'], ["Confession of Varek, the king's cupbearer.", null, `The altar is on ${ET}. ${cap(b.en)} killed the prince; the king drank from ${g.en} and lived.`, 'The third holds only stale water.']]; },
+    braseros: () => [['Cartas de Ilsa, astrónoma.', null, `Su cámara está en el ${LT}, bajo un mural con su constelación.`, 'Enciende con la antorcha solo los braseros que el mural enciende, de izquierda a derecha según lo miras. Uno de más y la sala arde.'], ['Letters of Ilsa the astronomer.', null, `Her vault is on ${ET}, under a mural of her constellation.`, 'Light with the torch only the braziers the mural lights, left to right as you face it. One too many and the room burns.']],
+  }[kind]();
+  const join = (L) => L.filter(Boolean).join(' ');
+  return { es: T[0], en: T[1], jot: { es: 'Otro pergamino: ' + join(T[0]), en: 'Another scroll: ' + join(T[1]) }, part: 1, kind, bundle: true };
+}
+// premio de una prueba superada: si no es la última, el pergamino de la siguiente; si es la última, el tesoro
+function trialPayoff(T, x, y, finalFn) {
+  if (T && T.final === false && T.nextNote) {
+    G.pickups.push({ type: 'note', x, y, t: 0, note: T.nextNote });
+    toast(chEN() ? 'A SCROLL APPEARS: THE NEXT TRIAL' : 'APARECE UN PERGAMINO: LA SIGUIENTE PRUEBA', true);
+    return false;
+  }
+  finalFn();
+  if (T && T.final) toast(chEN() ? 'THE LAST TRIAL: THE TREASURE IS YOURS!' : 'LA ÚLTIMA PRUEBA: ¡EL TESORO ES TUYO!', true);
+  return true;
+}
+// fallar una prueba que no es la última: se pierde el rastro de la siguiente
+function chainLost(T) {
+  if (!T || T.final !== false) return;
+  jot('chainlost' + G.dg.n, chEN() ? 'I failed a trial: the trail to the next one is lost.' : 'Fallé una prueba: se perdió el rastro de la siguiente.');
+}
+const finalChest = (x, y, gold) => G.pickups.push({ type: 'chest', x, y, t: 0, gold: Math.round(gold || 9 * G.floor * rand(14, 20) * lootMul()), item: 'potion', eqItem: makeItem('vault', null, { rar: 'legendario' }) });
 function chainStrike(kind) {
   const n = G.dg.n;
   for (let k = 1; k <= 3; k++) { strike('note' + n + '_' + kind + '_' + k); strike('note' + n + '_' + k); }
@@ -417,7 +455,10 @@ function brazierOffSprite() { // el brasero sin llama: brasas oscuras
   }
   return { w: s.w, h: s.h, px, flash: px };
 }
+// objetos de las pruebas hechos con Pixellab (assets/pixellab/obj_*.png): si existen, sustituyen a los dibujados por código
+const OBJ_PIX = [['balance', 'obj_balance'], ['musicbox', 'obj_musicbox'], ['cups', 'obj_cups'], ['cupsEmpty', 'obj_cups_empty'], ['tablet', 'obj_tablet'], ['noteItem', 'obj_scroll']];
 function chainArt(lv) {
+  if (SPR.pixReady && !chainArt.objs) { chainArt.objs = true; if (!SPR.tablet && typeof labArt === 'function') labArt(lv); for (const [k, n] of OBJ_PIX) if (SPR[n]) SPR[k] = k === 'noteItem' ? trimSprite(SPR[n]) : [trimSprite(SPR[n])]; }
   if (!SPR.balance) { SPR.balance = [balanceSprite()]; SPR.musicbox = [musicboxSprite()]; SPR.cups = [cupsSprite(true)]; SPR.cupsEmpty = [cupsSprite(false)]; }
   if (!SPR.brazierOff && SPR.brazier) SPR.brazierOff = [brazierOffSprite()];
   const T = lv.themeObj;
@@ -442,6 +483,14 @@ function furnishChain(lv, r) {
   if (r.type === 'baldosas') lv.lights.push({ x: c.x, y: c.y, c: [0.9, 0.85, 0.75], rad: 4.6 });
   if (r.type === 'braseros') { P.pos.forEach((q, k) => { const d = lv.addDecor('brazier', q.x, q.y, false); d.used = true; d.bz = k; }); lv.lights.push({ x: c.x, y: c.y, c: [0.5, 0.5, 0.8], rad: 3.6 }); }
 }
+// ¿está el jugador en mitad de una prueba? (sala de prueba sin resolver o laberinto sin resolver): no aparecen monstruos
+function inTrialArea() {
+  const lv = G.lv, p = G.p; if (!lv || !p) return false;
+  const x = Math.floor(p.x), y = Math.floor(p.y);
+  if (lv.maze && !lv.maze.state && inMaze(lv, x, y)) return true;
+  const ri = lv.roomOf[y * MW + x], r = ri >= 0 ? lv.rooms[ri] : null;
+  return !!(r && r.puzzle && !r.puzzle.state);
+}
 function relight(lv) { lv.lightMap = lv.computeLightMap(); }
 function chainRoomNear(lv, i) { const x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of DIRS4) { const r = lv.roomOf[(y + dy) * MW + x + dx]; if (r >= 0 && lv.rooms[r].puzzle) return lv.rooms[r]; } return null; }
 function chainTouch(lv, i, v) {
@@ -462,7 +511,7 @@ function chainTouch(lv, i, v) {
     toast(en ? 'WRONG ORDER! THE FLOOR BITES' : '¡ORDEN EQUIVOCADO! EL SUELO MUERDE', true);
     logMsg(en ? 'Spikes burst out of the floor and the mechanism jams' : 'Brotan pinchos del suelo y el mecanismo se atasca', C.red);
     trialJot('palancas', 'Bajé las palancas en mal orden: brotaron pinchos y el mecanismo se atascó.', 'I pulled the levers in the wrong order: spikes burst out and the mechanism jammed.');
-    chainStrike('palancas'); if (typeof track === 'function') track('palancas/fallado');
+    chainStrike('palancas'); chainLost(P); if (typeof track === 'function') track('palancas/fallado');
     return true;
   }
   logMsg(en ? `The lever of ${LEVER_SYMS[k].en} goes down with a clunk` : `La palanca de ${LEVER_SYMS[k].es} baja con un chasquido`, C.dim);
@@ -480,8 +529,7 @@ function openVault(lv, P, gold) {
   const V = P.vault; lv.openCell(V.door);
   Sfx.play('portal'); G.flashFx = 0.6; G.shake = Math.max(G.shake, 0.35);
   burst(V.x, V.y, 0.4, 20, rgb(255, 220, 140), 2, 0.8, true, 0.05);
-  const item = makeItem('vault', null, { rar: Math.random() < 0.5 ? 'legendario' : 'epico' });
-  G.pickups.push({ type: 'chest', x: V.x, y: V.y, t: 0, gold: Math.round(gold || 9 * G.floor * rand(12, 18) * lootMul()), item: 'potion', eqItem: item });
+  trialPayoff(P, V.x, V.y, () => finalChest(V.x, V.y, gold));
 }
 // ---- campanas
 function bellTouch(lv, i, v) {
@@ -499,7 +547,7 @@ function bellTouch(lv, i, v) {
     Sfx.play('roar'); G.shake = Math.max(G.shake, 0.5);
     toast(en ? 'A WRONG NOTE! THE GUARDIANS WAKE' : '¡NOTA EQUIVOCADA! DESPIERTAN LOS GUARDIANES', true);
     trialJot('campanas', 'Fallé una nota de la canción de la reina y despertaron sus espectros.', "I missed a note of the queen's song and her wraiths woke up.");
-    chainStrike('campanas'); if (typeof track === 'function') track('campanas/fallado');
+    chainStrike('campanas'); chainLost(P); if (typeof track === 'function') track('campanas/fallado');
     return true;
   }
   if (P.input.length === P.seq.length) {
@@ -543,8 +591,8 @@ function chainUpdate() {
       const s = lv.floorTex[c] - 4;
       if (s >= 0 && s < 4 && s !== P.safe) tileFail(lv, r, P, c);
     }
-    const ch = G.pickups.find(k => k.trial === 'baldosas' && k.open);
-    if (ch) { P.state = 1; trialJot('baldosas', 'Crucé la sala de las losas pisando solo el símbolo bueno y abrí el cofre.', 'I crossed the tile room stepping only on the right symbol and opened the chest.'); chainStrike('baldosas'); if (typeof track === 'function') track('baldosas/resuelto'); }
+    const ch = G.pickups.find(k => k.trial === 'baldosas');
+    if (!ch || ch.open || ch.dead) { P.state = 1; trialJot('baldosas', 'Crucé la sala de las losas pisando solo el símbolo bueno y abrí el cofre.', 'I crossed the tile room stepping only on the right symbol and opened the chest.'); chainStrike('baldosas'); if (typeof track === 'function') track('baldosas/resuelto'); }
   }
   if (r.type === 'braseros' && !P.state) {
     for (const d of G.decor) {
@@ -567,10 +615,10 @@ function tileFail(lv, r, P, c) {
   if (P.fails < 3) { toast(en ? `WRONG TILE! (${P.fails}/3)` : `¡LOSA EQUIVOCADA! (${P.fails}/3)`, false); return; }
   P.state = 2;
   const ch = G.pickups.find(k => k.trial === 'baldosas' && !k.open);
-  if (ch) { ch.dead = true; burst(ch.x, ch.y, 0.2, 30, rgb(110, 96, 80), 2.6, 0.9, false, 0.08); }
+  if (ch) { ch.dead = true; ch.lost = true; burst(ch.x, ch.y, 0.2, 30, rgb(110, 96, 80), 2.6, 0.9, false, 0.08); }
   toast(en ? 'THE FLOOR SINKS UNDER THE CHEST!' : '¡EL SUELO SE HUNDE BAJO EL COFRE!', true);
   trialJot('baldosas', 'Pisé tres losas equivocadas y el suelo se tragó el cofre.', 'I stepped on three wrong tiles and the floor swallowed the chest.');
-  chainStrike('baldosas'); if (typeof track === 'function') track('baldosas/fallado');
+  chainStrike('baldosas'); chainLost(P); if (typeof track === 'function') track('baldosas/fallado');
 }
 function lightBrazier(lv, r, P, d) {
   const en = chEN(), bit = 1 << d.bz;
@@ -584,7 +632,7 @@ function lightBrazier(lv, r, P, d) {
     G.flashFx = 0.6; G.shake = Math.max(G.shake, 0.6); Sfx.play('boss');
     toast(en ? 'ONE FIRE TOO MANY! THE ROOM BURNS' : '¡UN FUEGO DE MÁS! LA SALA ARDE', true);
     trialJot('braseros', 'Encendí un brasero que no marcaba el mural: la sala ardió y todos se apagaron.', 'I lit a brazier the mural did not mark: the room burned and they all went out.');
-    chainStrike('braseros'); if (typeof track === 'function') track('braseros/fallado');
+    chainStrike('braseros'); chainLost(P); if (typeof track === 'function') track('braseros/fallado');
     return;
   }
   if (P.lit === P.mask) {
@@ -624,10 +672,11 @@ function balancePay(r, amt) {
     toast(en ? 'THE SCALES SWALLOW YOUR GOLD' : 'LA BALANZA SE TRAGA TU ORO', true);
     logMsg(en ? `Too little: ${amt} gold lost and the scales lock up` : `Demasiado poco: pierdes ${amt} de oro y la balanza se bloquea`, C.red);
     trialJot('balanza', `Puse ${amt} de oro en la balanza. No era bastante: se lo tragó todo.`, `I put ${amt} gold on the scales. It was not enough: it swallowed everything.`);
-    chainStrike('balanza'); if (typeof track === 'function') track('balanza/fallado');
+    chainStrike('balanza'); chainLost(P); if (typeof track === 'function') track('balanza/fallado');
     return;
   }
   P.state = 1; openVault(G.lv, P, Math.round(P.price * 2.5));
+  if (P.final === false) for (let k = 0; k < 3; k++) G.pickups.push({ type: 'gold', x: P.vault.x + rand(-0.6, 0.6), y: P.vault.y + rand(-0.6, 0.6), v: Math.round(P.price / 3), t: rand(0, 6) }); // te devuelve lo pagado
   toast(amt === P.price ? (en ? 'THE SCALES BALANCE: THE VAULT OPENS' : 'LA BALANZA SE EQUILIBRA: LA CÁMARA SE ABRE') : (en ? 'IT TIPS TOO FAR: THE EXCESS IS LOST' : 'SE INCLINA DE MÁS: EL EXCESO SE PIERDE'), true);
   trialJot('balanza', `Pagué ${amt} de oro a la balanza y se abrió la cámara.`, `I paid ${amt} gold to the scales and the vault opened.`);
   chainStrike('balanza'); if (typeof track === 'function') track('balanza/resuelto');
@@ -639,10 +688,11 @@ function drinkCup(r, i) {
   if (i === P.good) {
     P.state = 1; p.hp = p.maxHp; p.poisT = 0;
     addBuff('cupBless', en ? 'Royal blessing' : 'Bendición real', 240, { dmg: 1.3, spd: 1.1, regenPct: 0.01 }, C.gold);
-    dropItem('vault', r.cx + 0.9, r.cy + 0.5, { rar: Math.random() < 0.5 ? 'legendario' : 'epico' });
+    trialPayoff(P, r.cx + 0.9, r.cy + 0.5, () => dropItem('vault', r.cx + 0.9, r.cy + 0.5, { rar: 'legendario' }));
     G.flashFx = 0.6; Sfx.play('shrine');
     toast(en ? `${cup.en.toUpperCase()} WAS BLESSED!` : `¡${cup.es.toUpperCase()} ESTABA BENDITA!`, true);
-    trialJot('copas', `Bebí de ${cup.es}: estaba bendita. Me curó, me bendijo y bajo el altar había un tesoro.`, `I drank from ${cup.en}: it was blessed. It healed me, blessed me, and there was a treasure under the altar.`);
+    const fin = P.final !== false || !P.nextNote;
+    trialJot('copas', `Bebí de ${cup.es}: estaba bendita. Me curó, me bendijo y bajo el altar había ${fin ? 'un tesoro' : 'otro pergamino'}.`, `I drank from ${cup.en}: it was blessed. It healed me, blessed me, and under the altar there was ${fin ? 'a treasure' : 'another scroll'}.`);
     if (typeof track === 'function') track('copas/bendita');
   } else if (i === P.bad) {
     P.state = 2; p.poisT = 12; p.poisDps = Math.max(2, p.maxHp * 0.025);
@@ -650,12 +700,12 @@ function drinkCup(r, i) {
     G.flashFx = 0.4; Sfx.play('roar');
     toast(en ? `${cup.en.toUpperCase()} WAS POISONED!` : `¡${cup.es.toUpperCase()} ESTABA ENVENENADA!`, true);
     trialJot('copas', `Bebí de ${cup.es}: estaba envenenada. Veneno y una maldición que me debilita.`, `I drank from ${cup.en}: it was poisoned. Poison and a weakening curse.`);
-    if (typeof track === 'function') track('copas/envenenada');
+    chainLost(P); if (typeof track === 'function') track('copas/envenenada');
   } else {
     P.state = 2;
     toast(en ? 'STALE WATER... THE OTHER CUPS SPILL' : 'AGUA RANCIA... LAS OTRAS COPAS SE VUELCAN', true);
     trialJot('copas', `Bebí de ${cup.es}: solo era agua rancia. Las otras copas se volcaron.`, `I drank from ${cup.en}: only stale water. The other cups spilled.`);
-    if (typeof track === 'function') track('copas/agua');
+    chainLost(P); if (typeof track === 'function') track('copas/agua');
   }
   chainStrike('copas');
 }

@@ -147,7 +147,7 @@ const PACTS = {
 };
 function lootMul() { return (1 + (G.pact && PACTS[G.pact] ? PACTS[G.pact].bonus : 0)) * (G.nightmare ? 2 : 1); }
 function healMul() { return G.pact === 'sangre' ? 0.5 : 1; }
-function waveEvery() { return G.pact === 'horda' ? (G.nightmare ? 70 : 80) : (G.nightmare ? 100 : 120); } // pesadilla: oleadas más seguidas
+function waveEvery() { return G.pact === 'horda' ? (G.nightmare ? 85 : 100) : (G.nightmare ? 125 : 150); } // cada 2:30; pesadilla y La horda, más seguidas
 // rareza: con pacto o pesadilla, a veces se vuelve a tirar y se queda la mejor
 const RAR_ORDER = ['comun', 'raro', 'epico', 'legendario'];
 function luckyRarity(src, rar) {

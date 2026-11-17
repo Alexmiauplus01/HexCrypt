@@ -198,19 +198,19 @@ function strikeStatue(d) {
     G.flashFx = 0.8; G.shake = Math.max(G.shake, 0.3); Sfx.play('portal');
     vfxPowerUp('holy'); burst(d.x, d.y, 0.6, 24, rgb(255, 230, 150), 2.4, 0.9, true, 0.05);
     G.lv.lights.push({ x: d.x, y: d.y, c: [1.2, 1.0, 0.6], rad: 4 });
-    const legend = Math.random() < 0.5;
-    if (legend) dropItem('vault', d.x + 0.45, d.y + 0.3, { rar: 'legendario' });
-    else { // lluvia de cofres con oro alrededor de la estatua
+    const legend = P.final !== false || !P.nextNote; // la última prueba: legendario y lluvia de cofres; si no, el pergamino de la siguiente
+    trialPayoff(P, d.x + 0.45, d.y + 0.3, () => {
+      dropItem('vault', d.x + 0.45, d.y + 0.3, { rar: 'legendario' });
       const n = randi(3, 4);
       for (let k = 0; k < n; k++) {
         const a = k / n * TAU + rand(-0.3, 0.3); let x = d.x + Math.cos(a) * 1.1, y = d.y + Math.sin(a) * 1.1;
         if (G.lv.solid(x, y)) { x = d.x + Math.cos(a) * 0.6; y = d.y + Math.sin(a) * 0.6; }
         G.pickups.push({ type: 'chest', x, y, t: 0, gold: Math.round(9 * G.floor * rand(6, 9) * lootMul()), item: null, fall: 1 + k * 0.35 });
       }
-    }
+    });
     toast(en ? `THE ${b.en.toUpperCase()} STATUE OPENS UP!` : `¡LA ESTATUA DE${b.art === 'el' ? 'L' : ' LA'} ${b.es.toUpperCase()} SE ABRE!`, true);
-    logMsg(legend ? (en ? 'The statue was hiding a legendary treasure' : 'La estatua escondía un tesoro legendario') : (en ? 'Chests full of gold fall from the ceiling!' : '¡Caen del techo cofres llenos de oro!'), C.gold);
-    trialJot('estatuas', `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario.' : 'Cayeron del techo cofres llenos de oro.'}`, `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure.' : 'Chests full of gold fell from the ceiling.'}`);
+    logMsg(legend ? (en ? 'A legendary treasure, and chests fall from the ceiling!' : '¡Un tesoro legendario, y caen cofres del techo!') : (en ? 'The statue was hiding another scroll' : 'La estatua escondía otro pergamino'), C.gold);
+    trialJot('estatuas', `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario y cayeron cofres del techo.' : 'Dentro había otro pergamino.'}`, `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure and chests fell from the ceiling.' : 'Inside there was another scroll.'}`);
     chainStrike('estatuas');
     if (typeof track === 'function') track('acertijo/resuelto');
     return true;
@@ -229,7 +229,7 @@ function strikeStatue(d) {
   toast(en ? 'THE STATUES CRUMBLE!' : '¡LAS ESTATUAS SE DESMORONAN!', true);
   logMsg(en ? `It was not the ${b.en}... a horde answers the noise` : `No era ${b.art} ${b.es}... una horda acude al estruendo`, C.red);
   trialJot('estatuas', `Rompí la estatua de${b.art === 'el' ? 'l' : ' la'} ${b.es}. No era la buena: las estatuas se derrumbaron y vino una horda a por mí.`, `I broke the ${b.en} statue. It was the wrong one: the statues crumbled and a horde came for me.`);
-  strike('note' + G.dg.n); strike('puzzleroom' + G.dg.n);
+  chainStrike('estatuas'); chainLost(P);
   if (typeof track === 'function') track('acertijo/fallado');
   return true;
 }

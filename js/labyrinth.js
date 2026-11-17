@@ -114,8 +114,9 @@ function inMaze(lv, x, y) { const M = lv && lv.maze; return !!M && x >= M.x0 - 1
 function populateMaze(lv, P) {
   const M = lv.maze; if (!M) return;
   const e = spawnEnemy('minotaur', M.mino.x, M.mino.y); e.sleep = true;
-  const g = 9 * G.floor, item = makeItem('vault', null, { rar: Math.random() < 0.5 ? 'legendario' : 'epico' });
-  P.push({ type: 'chest', x: M.prize.x + M.prize.w / 2, y: M.prize.y + Math.floor(M.prize.h / 2) + 0.5, t: 0, gold: Math.round(g * rand(14, 20)), item: 'potion', eqItem: item });
+  const x = M.prize.x + M.prize.w / 2, y = M.prize.y + Math.floor(M.prize.h / 2) + 0.5;
+  if (M.final === false && M.nextNote) P.push({ type: 'note', x, y, t: 0, note: M.nextNote }); // no es la última prueba: el pergamino de la siguiente
+  else P.push({ type: 'chest', x, y, t: 0, gold: Math.round(9 * G.floor * rand(14, 20)), item: 'potion', eqItem: makeItem('vault', null, { rar: 'legendario' }) });
 }
 
 // ---------------------------------------------------------------- arte: puertas con símbolo y tablilla
@@ -250,7 +251,7 @@ function miniWake(e) {
 function miniKilled(e) {
   if (!e.def.mini) return;
   if (G.elite === e) G.elite = null;
-  dropItem('vault', e.x, e.y + 0.3, { rar: Math.random() < 0.35 ? 'legendario' : 'epico' });
+  dropItem('vault', e.x, e.y + 0.3, { rar: 'epico' }); // el legendario es solo para la última prueba
   for (let k = 0; k < 3; k++) G.pickups.push({ type: 'gold', x: e.x + rand(-0.5, 0.5), y: e.y + rand(-0.5, 0.5), v: Math.round(15 * G.floor * lootMul()), t: rand(0, 6) });
   for (let i = 0; i < 6; i++) dropGem(e.x + rand(-0.8, 0.8), e.y + rand(-0.8, 0.8), 4 * (1 + 0.5 * (G.floor - 1)));
   toast(labEN() ? 'THE MINOTAUR FALLS!' : '¡EL MINOTAURO HA CAÍDO!', true);

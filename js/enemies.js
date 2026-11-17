@@ -147,7 +147,7 @@ function findSpawn(minD, maxD, needHidden) {
 // monstruos errantes: cuanto más tiempo pasas en la mazmorra, más aparecen
 function updateSpawner(dt) {
   G.spawnT -= dt;
-  if (G.spawnT > 0 || G.arena) return;
+  if (G.spawnT > 0 || G.arena || inTrialArea()) return; // durante una prueba no aparecen errantes
   const t = G.t, f = G.floor;
   G.spawnT = Math.max(2.2, 9 - t * 0.012 - f * 0.45);
   const awake = G.enemies.filter(e => !e.dead && !e.sleep).length;
@@ -159,11 +159,11 @@ function updateSpawner(dt) {
   for (let i = 0; i < n; i++) spawnEnemy(type, pos[0] + rand(-0.4, 0.4), pos[1] + rand(-0.4, 0.4));
 }
 
-// Oleadas: cada 2 minutos llega una horda desde un punto al azar del piso en el que estés, cada vez mayor y más dura.
+// Oleadas: cada 2 minutos y medio (waveEvery) llega una horda desde un punto al azar del piso en el que estés, cada vez mayor y más dura.
 // Al cambiar de piso solo vuelve a empezar la cuenta atrás; el número de oleada solo vuelve a 0 en otra mazmorra.
 const WAVE_WARN = 10;
 function updateWaves(dt) {
-  if (G.arena || (G.boss && !G.boss.dead && !G.boss.sleep)) return; // no interrumpe la pelea con el jefe
+  if (G.arena || (G.boss && !G.boss.dead && !G.boss.sleep) || inTrialArea()) return; // no interrumpe la pelea con el jefe ni una prueba
   const before = G.waveT || 0; G.waveT = before + dt;
   const EVERY = waveEvery();
   if (before < EVERY - WAVE_WARN && G.waveT >= EVERY - WAVE_WARN) {
