@@ -507,6 +507,7 @@ function loadAssets() {
     im.src = ASSETS[n];
   }))).then(() => {
     SPR.daggerL = flipSprite(SPR.dagger);
+    SPR.pixReady = true; // ya están todos los sprites de Pixellab (las estatuas del acertijo se rehacen con ellos)
     // aspectos de las clases principales (Pixellab): los fantasmas rencorosos los usan con un halo azulado
     // aspecto de cada clase (Pixellab): fantasmas con halo azul y doppelgänger con aura roja
     for (const k of Object.keys(CLASSES)) if (SPR['skin_' + k]) {

@@ -803,6 +803,25 @@ class UI {
       this.text(cx + 8, yy + 6, t, hot ? C.goldL : C.gold, { align: 'center' });
     });
   }
+  // nota ensangrentada del acertijo: pergamino con frases sueltas y manchas de sangre donde no se puede leer
+  note(G) {
+    const N = G.noteOpen; if (!N) return;
+    this.darken(VX, VY, VW, VH, 0.6);
+    const en = typeof LANG !== 'undefined' && LANG === 'en', segs = (en ? N.en : N.es) || N.es;
+    const w = 300, cols = Math.floor((w - 28) / 6), lines = [];
+    for (const s of segs) {
+      if (s === null) lines.push([en ? '(THE BLOOD MAKES IT UNREADABLE)' : '(LA SANGRE NO DEJA LEER)', true]);
+      else wrapText(s.toUpperCase(), cols).forEach(l => lines.push([l, false]));
+    }
+    const h = 50 + lines.length * 11, x = Math.round(VX + (VW - w) / 2), y = Math.round(VY + Math.max(6, (VH - h) / 2));
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const e = i < 2 || j < 2 || i >= w - 2 || j >= h - 2, n = (hash2(i >> 1, j >> 1, 77) - 0.5) * 22, spot = hash2(i >> 2, j >> 2, 78) > (j > 18 && j < h - 6 && i > 8 && i < w - 8 ? 2 : 0.93);
+      this.px(x + i, y + j, e ? rgb(92, 66, 40) : spot ? rgb(120 + n, 24, 20) : rgb(206 + n, 186 + n, 140 + n * 0.8));
+    }
+    this.text(x + w / 2, y + 9, en ? 'A BLOODSTAINED NOTE' : 'UNA NOTA ENSANGRENTADA', rgb(110, 26, 20), { align: 'center', shadow: false });
+    lines.forEach(([l, blood], k) => this.text(x + 14, y + 28 + k * 11, l, blood ? rgb(150, 30, 24) : rgb(58, 38, 24), { shadow: false }));
+    this.text(x + w / 2, y + h - 13, G.touchMode ? 'TOCA PARA CERRAR' : 'HAZ CLIC PARA CERRAR', rgb(110, 90, 64), { align: 'center', shadow: false });
+  }
   exitAsk(G) {
     this.darken(VX, VY, VW, VH, 0.5);
     const cx = VX + VW / 2;

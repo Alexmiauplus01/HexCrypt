@@ -212,7 +212,7 @@ function populateLevel(lv) {
       }
       case 'secreta': box = chest(gold * rand(6, 10), 'potion'); break;
       case 'trampa': box = chest(gold * rand(5, 8)); break;
-      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': break;
+      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': break;
       case 'biblioteca': // saber antiguo: experiencia en gemas y algún erudito corrupto
         for (let k = 0; k < randi(2, 4); k++) { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'gem', x, y, v: 5, vx: 0, vy: 0, t: rand(0, 6) }); }
         foes(randi(1, 2), 'cultist'); if (Math.random() < 0.35) box = chest(gold * rand(3, 5));
@@ -231,6 +231,7 @@ function populateLevel(lv) {
         if (Math.random() < 0.18) box = chest(gold * rand(2, 4));
         if (Math.random() < 0.14) { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'torch', x, y, t: 0 }); }
     }
+    placeNote(lv, r, P, used); // la nota del acertijo, junto a un cadáver
     if (r.key !== undefined) {
       if (box && !box.item) box.item = { key: r.key };
       else { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'key', key: r.key, x, y, t: rand(0, 6) }); }
@@ -264,6 +265,7 @@ function enterLevel(z, at, first) {
   const lv = G.dg.lv(z);
   G.lv = lv; G.z = z; G.floor = G.dg.diff(z);
   if (!lv.themeObj) lv.themeObj = buildTheme(lv.theme);
+  puzzleArt(lv); // estatuas y murales del acertijo
   G.theme = lv.themeObj; R.setTheme(G.theme);
   if (G.state !== 'title') Sfx.playMusic(lv.theme % 4);
   G.enemies = lv.state.enemies; G.pickups = lv.state.pickups; G.traps = lv.state.traps; G.zones = lv.state.zones;
@@ -426,6 +428,7 @@ function updateRooms(dt) {
   const rIn = lv.roomOf[Math.floor(p.y) * MW + Math.floor(p.x)];
   if (rIn >= 0 && rIn !== G.roomIn) {
     G.roomIn = rIn; const r = lv.rooms[rIn];
+    if (r.type === 'estatuas') puzzleEnter(r);
     if (ROOM_HINT[r.type] && !r.named) { r.named = true; toast(ROOM_NAME[r.type].toUpperCase(), false); logMsg(ROOM_HINT[r.type], C.dim); }
   }
 }
@@ -576,6 +579,7 @@ function meleeHit() {
     if (holy) healP(p.maxHp * 0.012);
     hits++;
   }
+  hits += puzzleMelee(p, w); // estatuas del acertijo
   // desviar proyectiles enemigos
   for (const pr of G.projs) {
     if (pr.friendly || pr.dead) continue;
@@ -634,6 +638,7 @@ function updateProjs(dt) {
         else vfxImpact(pr.x - pr.vx * sdt, pr.y - pr.vy * sdt, 0.45, PROJ_RAMP[pr.spr] === 'fire' ? 'impact' : PROJ_RAMP[pr.spr] || 'impact', 0.8);
         break;
       }
+      if (pr.friendly && puzzleProj(pr)) { pr.dead = true; break; } // estatuas del acertijo
       if (pr.friendly) {
         for (const e of G.enemies) {
           if (e.dead || pr.hit.has(e)) continue;
@@ -959,6 +964,8 @@ function updatePickups(dt) {
       k.t += dt;
       if (Math.random() < dt * 30) burst(k.x + rand(-0.4, 0.4), k.y + rand(-0.4, 0.4), rand(0.1, 1.1), 1, k.back ? rgb(180, 140, 255) : rgb(150, 255, 120), 0.6, 0.8);
       if (d < 0.7) { if (k.back) leaveSecret(); else enterSecret(k); return; }
+    } else if (k.type === 'note') {
+      if (d < 0.75) readNote(k);
     } else if (k.type === 'torch') {
       if (d < 0.7) { k.dead = true; G.inv.torch++; Sfx.play('gem'); toast('+1 ANTORCHA', false); logMsg(`Recoges una antorcha (${G.inv.torch})`, C.orange); }
     } else if (k.type === 'key') {
@@ -1230,6 +1237,7 @@ function update(dt) {
 // ---------------------------------------------------------------- Dibujado
 function buildItems() {
   const items = [];
+  if (SPR.pixReady && !puzzleArt.final && G.lv) puzzleArt(G.lv); // estatuas definitivas en cuanto cargan los sprites
   const tm = G.time;
   for (const d of G.decor) {
     const def = DECOR[d.type], fr = SPR[d.type];
@@ -1251,6 +1259,7 @@ function buildItems() {
     else if (k.type === 'item') { const s = itemIcon(k.item); items.push({ x: k.x, y: k.y, spr: s, h: 0.24, w: 0.24, z: 0.18 + Math.sin(k.t * 3) * 0.04, bright: true }); }
     else if (k.type === 'soul') { const pu = 1 + Math.sin(k.t * 4) * 0.1; items.push({ x: k.x, y: k.y, spr: SPR.orbIce || SPR.orbBlue, w: 0.45 * pu, h: 0.45 * pu, z: 0.35 + Math.sin(k.t * 2) * 0.05, bright: true, add: true }); }
     else if (k.type === 'portal') { const s = k.back ? SPR.orbPurple : SPR.orbGreen, pu = 1 + Math.sin(k.t * 5) * 0.08; items.push({ x: k.x, y: k.y, spr: s, w: 1.1 * pu, h: 1.5 * pu, z: 0.05, bright: true, add: true }); }
+    else if (k.type === 'note') items.push({ x: k.x, y: k.y, spr: SPR.noteItem, h: 0.11, w: 0.15, z: 0.01 });
     else if (k.type === 'torch') items.push({ x: k.x, y: k.y, spr: SPR.torchItem, h: 0.36, w: 0.36 * SPR.torchItem.w / SPR.torchItem.h, z: 0 });
     else if (k.type === 'gold') items.push({ x: k.x, y: k.y, spr: SPR.coins, h: 0.13, w: 0.13 * SPR.coins.w / SPR.coins.h, z: 0.01 });
     else if (k.type === 'key') { const s = SPR.keys[k.key]; items.push({ x: k.x, y: k.y, spr: s, h: 0.3, w: 0.3 * s.w / s.h, z: 0.25 + Math.sin(k.t * 3) * 0.05, bright: true }); }
@@ -1345,7 +1354,7 @@ function render() {
   else if (G.state === 'classselect') ui.choice(G);
   else if (G.state === 'evolve') ui.choice(G);
   else {
-    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup'].includes(G.state)) ui.hud(G);
+    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup', 'note'].includes(G.state)) ui.hud(G);
     if (G.state === 'paused') ui.pause(G);
     else if (G.state === 'levelup') ui.levelUp(G);
     else if (G.state === 'learn') ui.learn(G);
@@ -1361,6 +1370,7 @@ function render() {
     else if (G.state === 'reforge') ui.reforge(G);
     else if (G.state === 'reward') ui.reward(G);
     else if (G.state === 'exitask') ui.exitAsk(G);
+    else if (G.state === 'note') ui.note(G);
     else if (G.state === 'escaped') ui.escaped(G);
     else if (G.state === 'pact') ui.pact(G);
   }
@@ -1397,6 +1407,7 @@ document.addEventListener('keydown', (ev) => {
   if (G.state === 'forge') { if (dig !== undefined) forgeBuy(dig); if (e.code === 'KeyR') G.state = 'reforge'; if (e.code === 'Escape' || e.code === 'KeyI') closeNpc(); return; }
   if (G.state === 'reward') { if (dig !== undefined) chooseReward(dig); return; }
   if (G.state === 'reforge') { const k = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[e.code], eq = SLOTS.filter(s => G.equip[s]); if (k !== undefined && eq[k]) reforgeItem(eq[k]); if (e.code === 'Escape' || e.code === 'KeyR') G.state = 'forge'; return; }
+  if (G.state === 'note') { closeNote(); return; }
   if (G.state === 'exitask') { if (dig === 0) leaveDungeon(); else if (dig === 1 || e.code === 'Escape') stayInDungeon(); return; }
   if (G.state === 'escaped') { if (dig === 0) nextDungeon(); else if (dig === 1) nextDungeon(true); else if (dig === 2) retire(); return; }
   if (G.state === 'pact') { const i = dig !== undefined ? dig : { Digit4: 3, Numpad4: 3 }[e.code]; if (i !== undefined) choosePact(i); return; }
@@ -1471,6 +1482,7 @@ function handleClick(x, y, button = 0) {
     case 'forge': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 'close') closeNpc(); else if (h.id === 'reforge') G.state = 'reforge'; else forgeBuy(h.id); } else closeNpc(); break; }
     case 'reward': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) chooseReward(h.id); break; }
     case 'reforge': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) reforgeItem(h.id); else G.state = 'forge'; break; }
+    case 'note': closeNote(); break;
     case 'exitask': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) leaveDungeon(); else stayInDungeon(); } break; }
     case 'escaped': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) nextDungeon(); else if (h.id === 1) nextDungeon(true); else retire(); } break; }
     case 'pact': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) choosePact(h.id); break; }

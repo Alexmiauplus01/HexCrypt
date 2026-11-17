@@ -311,7 +311,7 @@ class Level {
     const rooms = this.rooms;
     for (let i = 0; i < rooms.length; i++) {
       const r = rooms[i];
-      if (r.shape === 'rect' && r.w >= 7 && r.h >= 7 && Math.random() < 0.55 && !['santuario', 'arena', 'trampa', 'guarida'].includes(r.type)) {
+      if (r.shape === 'rect' && r.w >= 7 && r.h >= 7 && Math.random() < 0.55 && !['santuario', 'arena', 'trampa', 'guarida', 'estatuas'].includes(r.type)) {
         for (const [px, py] of [[r.x + 2, r.y + 2], [r.x + r.w - 3, r.y + 2], [r.x + 2, r.y + r.h - 3], [r.x + r.w - 3, r.y + r.h - 3]]) {
           const pi = py * MW + px;
           // no tapar llegadas de escalera ni el paso desde un hueco
@@ -340,7 +340,7 @@ class Level {
           this.lights.push({ x: x + 0.5 + dx * 0.62, y: y + 0.5 + dy * 0.62, c: LIGHT_FIRE, rad: 4.6 });
         } else if (Math.random() < 0.06) this.cells[i] = 6;
       }
-      if (['santuario', 'arena', 'trampa', 'biblioteca', 'osario', 'fuente', 'almacen', 'jardin', 'ritual'].includes(r.type)) return; // las salas especiales se amueblan aparte
+      if (['santuario', 'arena', 'trampa', 'biblioteca', 'osario', 'fuente', 'almacen', 'jardin', 'ritual', 'estatuas'].includes(r.type)) return; // las salas especiales se amueblan aparte
       const free = (x, y) => this.at(x, y) === 0 && !this.nearSpecial(x, y);
       const corners = [[r.x, r.y], [r.x + r.w - 1, r.y], [r.x, r.y + r.h - 1], [r.x + r.w - 1, r.y + r.h - 1]];
       for (const [cx, cy] of corners) {
