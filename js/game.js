@@ -759,7 +759,14 @@ function updatePassives2(dt) {
   const p = G.p;
   const lw = L('wisp');
   if (lw > 0) { // la esfera flota por delante (sin atravesar paredes) e ilumina
-    const t = aimPos(1.7), w = G.wisp || (G.wisp = { x: p.x, y: p.y, cd: 0 }), k = Math.min(1, dt * 6);
+    // arriba a la izquierda de la vista (no en el centro): por delante y hacia la izquierda; si hay pared, se acerca
+    let t = null;
+    for (const s of [1, 0.75, 0.5, 0.25]) {
+      const c = Math.cos(p.a), sn = Math.sin(p.a), x = p.x + (c * 1.5 + sn * 0.48) * s, y = p.y + (sn * 1.5 - c * 0.48) * s;
+      if (!G.lv.solid(x, y)) { t = { x, y }; break; }
+    }
+    t = t || { x: p.x, y: p.y };
+    const w = G.wisp || (G.wisp = { x: p.x, y: p.y, cd: 0 }), k = Math.min(1, dt * 6);
     w.x += (t.x - w.x) * k; w.y += (t.y - w.y) * k; w.cd -= dt;
     if (lw >= 3 && w.cd <= 0) { w.cd = 0.5; for (const e of enemiesIn(w.x, w.y, 0.9)) { damageEnemy(e, (4 + 3 * lw) * p.dmgMul, { silent: true }); applyFx(e, { burn: 2 }); } }
   } else G.wisp = null;
@@ -1265,7 +1272,7 @@ function buildItems() {
   vfxItems(items);
   for (const f of G.fx) if (f.type === 'pillar') items.push({ x: f.x, y: f.y, spr: SPR.pillar, w: 0.7 * f.scale, h: 5, z: 0, bright: true, add: true, k: Math.min(1, f.life / f.max * 1.6) });
   for (const f of G.fx) if (f.type === 'bolt') items.push({ x: f.x, y: f.y, spr: SPR['bolt' + f.v], w: 0.5, h: 3.2, z: 0, bright: true, add: true });
-  if (G.wisp) items.push({ x: G.wisp.x, y: G.wisp.y, spr: SPR.orbGold, w: 0.24, h: 0.24, z: 0.55 + Math.sin(tm * 3) * 0.05, bright: true, add: true });
+  if (G.wisp) items.push({ x: G.wisp.x, y: G.wisp.y, spr: SPR.orbGold, w: 0.22, h: 0.22, z: 0.9 + Math.sin(tm * 3) * 0.03, bright: true, add: true });
   if (G.fam) items.push({ x: G.fam.x, y: G.fam.y, spr: SPR.orbPurple, w: 0.2, h: 0.2, z: 0.62 + Math.sin(tm * 4 + 1) * 0.06, bright: true, add: true });
   const nb = L('blades');
   for (let i = 0; i < nb; i++) {
