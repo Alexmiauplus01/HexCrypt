@@ -257,6 +257,7 @@ function enemyShot(x, y, a, spd, dmg, proj, size = 0.4, chill = 0, poison = 0) {
 // ---------------------------------------------------------------- Despertar, daño, muerte, IA y jefes
 function wakeEnemy(e) {
   e.sleep = false;
+  miniWake(e);
   if (e.ghost && G.elite !== e) { G.elite = e; toast(e.ghost.doppel ? '¡TU DOPPELGANGER!' : `¡${e.def.name.toUpperCase()} DESPIERTA!`, true); logMsg(e.ghost.doppel ? 'Una copia exacta de ti sale de las sombras...' : `Un fantasma rencoroso de nivel ${e.ghost.lvlNow} te reconoce...`, e.ghost.doppel ? C.red : C.cyan); Sfx.play('roar'); G.shake = Math.max(G.shake, 0.4); }
   if (e.def.boss && !G.boss) {
     G.boss = e;
@@ -309,7 +310,7 @@ function killEnemy(e) {
     const t = e.type, x = e.x, y = e.y, hp = e.maxHp * 0.5;
     later(2.5, () => { if (G.state === 'title') return; const c = spawnEnemy(t, x, y); c.splits = c.revive = false; c.hp = c.maxHp = hp; c.sleep = false; vfxBlink(x, y, 'void'); burst(x, y, 0.5, 18, rgb(170, 90, 255), 2, 0.7); Sfx.play('summon'); if (!G.reviveSeen) { G.reviveSeen = true; toast('¡SE LEVANTA DE NUEVO!', false); } });
   }
-  forgeOnKill(e); equipOnKill(e); eliteKilled(e);
+  forgeOnKill(e); equipOnKill(e); eliteKilled(e); miniKilled(e);
   if (e.ghost && e.ghost.doppel) { // doppelgänger: botín de jefe
     if (G.elite === e) G.elite = null;
     toast('TU DOBLE SE DESVANECE', true); G.flashFx = 0.8; Sfx.play('portal');

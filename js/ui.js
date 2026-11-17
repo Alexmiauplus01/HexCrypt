@@ -811,14 +811,15 @@ class UI {
     const w = 300, cols = Math.floor((w - 28) / 6), lines = [];
     for (const s of segs) {
       if (s === null) lines.push([en ? '(THE BLOOD MAKES IT UNREADABLE)' : '(LA SANGRE NO DEJA LEER)', true]);
+      else if (s === '') lines.push(['', false]);
       else wrapText(s.toUpperCase(), cols).forEach(l => lines.push([l, false]));
     }
     const h = 50 + lines.length * 11, x = Math.round(VX + (VW - w) / 2), y = Math.round(VY + Math.max(6, (VH - h) / 2));
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
       const e = i < 2 || j < 2 || i >= w - 2 || j >= h - 2, n = (hash2(i >> 1, j >> 1, 77) - 0.5) * 22, spot = hash2(i >> 2, j >> 2, 78) > (j > 18 && j < h - 6 && i > 8 && i < w - 8 ? 2 : 0.93);
-      this.px(x + i, y + j, e ? rgb(92, 66, 40) : spot ? rgb(120 + n, 24, 20) : rgb(206 + n, 186 + n, 140 + n * 0.8));
+      this.px(x + i, y + j, N.stone ? (e ? rgb(60, 58, 56) : rgb(122 + n, 118 + n, 112 + n)) : e ? rgb(92, 66, 40) : spot ? rgb(120 + n, 24, 20) : rgb(206 + n, 186 + n, 140 + n * 0.8));
     }
-    this.text(x + w / 2, y + 9, en ? 'A BLOODSTAINED NOTE' : 'UNA NOTA ENSANGRENTADA', rgb(110, 26, 20), { align: 'center', shadow: false });
+    this.text(x + w / 2, y + 9, N.title ? (en ? N.title.en : N.title.es) : en ? 'A BLOODSTAINED NOTE' : 'UNA NOTA ENSANGRENTADA', N.stone ? rgb(40, 34, 30) : rgb(110, 26, 20), { align: 'center', shadow: false });
     lines.forEach(([l, blood], k) => this.text(x + 14, y + 28 + k * 11, l, blood ? rgb(150, 30, 24) : rgb(58, 38, 24), { shadow: false }));
     this.text(x + w / 2, y + h - 13, G.touchMode ? 'TOCA PARA CERRAR' : 'HAZ CLIC PARA CERRAR', rgb(110, 90, 64), { align: 'center', shadow: false });
   }

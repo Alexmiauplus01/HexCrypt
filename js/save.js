@@ -14,7 +14,7 @@ function packLevel(lv, live) {
     z: lv.z, theme: lv.theme, cells: b64(cells), floorTex: b64(lv.floorTex), roomOf: b64(new Uint8Array(lv.roomOf.buffer.slice(0))), seen: b64(lv.seen),
     rooms: lv.rooms.map(r => Object.assign({}, r, { shrine: undefined, done: r.done && !(G.arena && G.arena.r === r) })),
     openings: [...lv.openings], locks: [...lv.locks], secret: [...lv.secret], stairs: [...lv.stairs], exit: lv.exit,
-    spikes: lv.spikes, decor: lv.decor, lights: lv.lights, npcs: lv.npcs.map(n => ({ type: n.type, x: n.x, y: n.y })), visited: !!lv.visited,
+    spikes: lv.spikes, decor: lv.decor, lights: lv.lights, maze: lv.maze || null, npcs: lv.npcs.map(n => ({ type: n.type, x: n.x, y: n.y })), visited: !!lv.visited,
     enemies: st.enemies.filter(e => !e.dead && !e.arena).map(e => ({ type: e.type, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, spd: e.spd, dmgM: e.dmgM, sleep: !!e.sleep, ghost: e.ghost || null, elite: e.elite || null, big: e.big || null, flank: e.flank || 0 })),
     pickups: st.pickups.filter(k => !k.dead),
   };
@@ -23,6 +23,7 @@ function unpackLevel(o) {
   const lv = new Level(o.z, o.theme);
   lv.cells = unb64(o.cells, Uint8Array); lv.floorTex = unb64(o.floorTex, Uint8Array); lv.roomOf = unb64(o.roomOf, Int16Array); lv.seen = unb64(o.seen, Uint8Array);
   lv.rooms = o.rooms; lv.openings = new Map(o.openings); lv.locks = new Map(o.locks); lv.secret = new Set(o.secret); lv.stairs = new Map(o.stairs); lv.exit = o.exit;
+  lv.maze = o.maze || null;
   lv.spikes = o.spikes; lv.decor = o.decor; lv.lights = o.lights; lv.npcs = o.npcs; lv.visited = o.visited;
   lv.shrines = lv.decor.filter(d => d.type === 'altar');
   lv.finalize();

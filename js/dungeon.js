@@ -52,16 +52,18 @@ class Dungeon {
 
   build() {
     this.levels = {}; this.links = [];
-    // 1. trazado de cada nivel (tema según profundidad)
+    // 1. trazado de cada nivel (tema según profundidad); un laberinto en uno de ellos
     for (const z of this.zs) {
       const th = ((this.n - 1) + Math.abs(z) + (z > 0 ? 2 : 0)) % THEME_COUNT;
       const lv = new Level(z, th);
       const nRooms = 9 + Math.min(5, this.n + Math.abs(z));
       if (!lv.layout(nRooms, this.n * 977 + z * 131 + randi(0, 9999))) return false;
       if (Math.random() < 0.75) lv.addSecretRoom();
-      lv.paint(this.n * 31 + z * 7);
       this.levels[z] = lv;
     }
+    // 1b. laberinto (js/labyrinth.js) en el primer nivel, al azar, donde quepa; después se pintan los niveles
+    for (const z of this.zs.slice().sort(() => Math.random() - 0.5)) if (carveMaze(this.levels[z])) break;
+    for (const z of this.zs) { const lv = this.levels[z]; lv.paint(this.n * 31 + z * 7); applyMaze(lv); }
     // 2. entrada (salida al exterior) en el nivel 0
     const L0 = this.levels[0];
     const ent = L0.placeOnWall(0, W_EXIT) || L0.placeOnWall(1, W_EXIT);

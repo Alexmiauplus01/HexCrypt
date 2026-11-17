@@ -1190,7 +1190,7 @@ function initSprites() {
   SPR.mushroom = [0, 1, 2, 3].map(f => drawMushroom(f, 'green')); SPR.mushroomB = [0, 1, 2, 3].map(f => drawMushroom(f, 'blue'));
   SPR.ritual = [0, 1, 2, 3].map(drawRitualStone); SPR.icecrystal = [0, 1, 2, 3].map(drawIceCrystal);
   SPR.yeti = [0, 1].map(drawYeti); SPR.icewisp = [0, 1].map(drawIceWisp); SPR.rat = [0, 1].map(drawRat);
-  SPR.wolfE = SPR.hound; SPR.bearE = SPR.yeti; // provisionales hasta que carguen los de Pixellab
+  SPR.wolfE = SPR.hound; SPR.bearE = SPR.yeti; SPR.minotaur = SPR.yeti; // provisionales hasta que carguen los de Pixellab
   SPR.deepwarrior = [0, 1].map(f => drawDeepOne(f, false)); SPR.deepmage = [0, 1].map(f => drawDeepOne(f, true));
   for (const k in HUMANOIDS) SPR[k] = [0, 1].map(f => drawHumanoid(HUMANOIDS[k], f));
   SPR.cowwarrior = SPR.orc; SPR.cowmage = SPR.deepmage; SPR.cowking = SPR.boss; // provisionales de las vacas hasta que carguen las de Pixellab

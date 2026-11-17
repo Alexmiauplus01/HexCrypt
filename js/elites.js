@@ -24,7 +24,7 @@ function makeElite(e, aff) {
   if (aff === 'rapido') e.spd *= 1.5;
   e.sumT = 3;
 }
-function eliteName(e) { return `${e.def.name} ${ELITE_AFFIX[e.elite].name}`; }
+function eliteName(e) { return e.elite && ELITE_AFFIX[e.elite] ? `${e.def.name} ${ELITE_AFFIX[e.elite].name}` : e.def.name; } // el minotauro (minijefe) no tiene rasgo de élite
 function updateElites(dt) {
   const p = G.p;
   for (const e of G.enemies) {

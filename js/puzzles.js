@@ -25,7 +25,8 @@ ROOM_HINT.estatuas = 'Esta sala está impregnada de fuerzas místicas...';
 function planPuzzle(dg) {
   if (dg.zs.length < 2) return;
   const cand = [];
-  for (const z of dg.zs) dg.levels[z].rooms.forEach(r => {
+  const z0 = dg.start ? dg.start.z : 0;
+  for (const z of dg.zs) if (z !== z0) dg.levels[z].rooms.forEach(r => {
     if (r.type === 'normal' && !r.stair && r.shape !== 'round' && r.w >= 6 && r.h >= 5 && r.doors.length) cand.push({ z, r });
   });
   if (!cand.length) return;
@@ -34,9 +35,9 @@ function planPuzzle(dg) {
   const ok = pick(ids), broken = pick(ids.filter(i => i !== ok));
   c.r.type = 'estatuas';
   c.r.puzzle = { ids, ok, state: 0 };
-  // la nota, en otro nivel, junto a un cadáver
+  // la nota, en el nivel donde empieza la mazmorra, junto a un cadáver
   const spots = [];
-  for (const z of dg.zs) if (z !== c.z) dg.levels[z].rooms.forEach(r => { if (r.type === 'normal' && !r.stair && r.doors.length) spots.push({ z, r }); });
+  dg.levels[z0].rooms.forEach(r => { if ((r.type === 'normal' || r.type === 'entrada') && r.doors.length) spots.push({ z: z0, r }); });
   if (!spots.length) return;
   const s = pick(spots);
   s.r.note = puzzleNote(c.z, s.z, broken);
@@ -133,7 +134,15 @@ function puzzleArt(lv) {
   if (!SPR.statueBroken) {
     for (const b of PUZ_BEASTS) { const s = b.spr(); SPR['statue_' + b.id] = [statueSprite(s && s.px ? s : SPR.skeleton[0])]; }
     SPR.statueBroken = [rubbleSprite()];
-    SPR.noteItem = (() => { const w = 12, h = 9, px = new Uint32Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const e = x === 0 || x === w - 1 || y === 0 || y === h - 1, ink = y > 1 && y < h - 2 && (y & 1) && x > 1 && x < w - 2 && hash2(x, y, 5) > 0.3; px[y * w + x] = e ? rgb(120, 96, 60) : ink ? rgb(90, 60, 40) : hash2(x, y, 6) > 0.85 ? rgb(150, 30, 24) : rgb(214, 196, 150); } return { w, h, px, flash: px }; })();
+    SPR.noteItem = (() => { // pergamino enrollado: cuerpo de papel y dos rollos en los extremos
+      const w = 16, h = 9, px = new Uint32Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const roll = x < 3 || x > 12, body = !roll && y > 0 && y < h - 1;
+        if (roll) { const k = 0.6 + 0.5 * Math.sin((y + 0.5) / h * Math.PI); px[y * w + x] = (x === 0 || x === w - 1) ? rgb(110, 80, 46) : rgb(214 * k, 184 * k, 128 * k); }
+        else if (body) { const ink = y > 2 && y < h - 2 && (y & 1) && x > 4 && x < 11 && hash2(x, y, 5) > 0.35; px[y * w + x] = ink ? rgb(80, 52, 34) : hash2(x, y, 6) > 0.9 ? rgb(150, 30, 24) : rgb(232, 214, 168); }
+      }
+      return { w, h, px, flash: px };
+    })();
   }
   const T = lv.themeObj;
   if (T && T.murals !== (puzzleArt.gen || 0) + 1) { T.murals = (puzzleArt.gen || 0) + 1; PUZ_BEASTS.forEach((b, k) => { const s = b.spr(); T.walls[W_MURAL + k] = muralTex(T.walls[4] || T.walls[1], s && s.px ? s : null); }); }
@@ -144,8 +153,8 @@ function puzzleArt(lv) {
 function placeNote(lv, r, P, used) {
   if (!r.note) return;
   const [x, y] = roomSpot(lv, r, used);
-  lv.addDecor('bones', x - 0.15, y + 0.1, false);
-  P.push({ type: 'note', x, y, t: 0, note: r.note });
+  lv.addDecor('bonepile', x - 0.2, y + 0.05, false);
+  P.push({ type: 'note', x: x + 0.22, y: y - 0.05, t: 0, note: r.note });
 }
 function readNote(k) {
   k.dead = true; G.noteOpen = k.note; G.state = 'note'; mouse.fire = false;
@@ -193,11 +202,19 @@ function strikeStatue(d) {
     G.flashFx = 0.8; G.shake = Math.max(G.shake, 0.3); Sfx.play('portal');
     vfxPowerUp('holy'); burst(d.x, d.y, 0.6, 24, rgb(255, 230, 150), 2.4, 0.9, true, 0.05);
     G.lv.lights.push({ x: d.x, y: d.y, c: [1.2, 1.0, 0.6], rad: 4 });
-    dropItem('vault', d.x + 0.45, d.y + 0.3, { rar: 'legendario' });
-    for (let k = 0; k < 4; k++) G.pickups.push({ type: 'gold', x: d.x + rand(-0.6, 0.6), y: d.y + rand(0.3, 0.8), v: Math.round(25 * G.floor * lootMul()), t: rand(0, 6) });
+    const legend = Math.random() < 0.5;
+    if (legend) dropItem('vault', d.x + 0.45, d.y + 0.3, { rar: 'legendario' });
+    else { // lluvia de cofres con oro alrededor de la estatua
+      const n = randi(3, 4);
+      for (let k = 0; k < n; k++) {
+        const a = k / n * TAU + rand(-0.3, 0.3); let x = d.x + Math.cos(a) * 1.1, y = d.y + Math.sin(a) * 1.1;
+        if (G.lv.solid(x, y)) { x = d.x + Math.cos(a) * 0.6; y = d.y + Math.sin(a) * 0.6; }
+        G.pickups.push({ type: 'chest', x, y, t: 0, gold: Math.round(9 * G.floor * rand(6, 9) * lootMul()), item: null, fall: 1 + k * 0.35 });
+      }
+    }
     toast(en ? `THE ${b.en.toUpperCase()} STATUE OPENS UP!` : `¡LA ESTATUA DE${b.art === 'el' ? 'L' : ' LA'} ${b.es.toUpperCase()} SE ABRE!`, true);
-    logMsg(en ? 'The statue was hiding a legendary treasure' : 'La estatua escondía un tesoro legendario', C.gold);
-    jot('puzzle' + G.dg.n, en ? `I solved the statues: it was the ${b.en}, like in the murals. Inside there was a legendary treasure.` : `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. Dentro había un tesoro legendario.`);
+    logMsg(legend ? (en ? 'The statue was hiding a legendary treasure' : 'La estatua escondía un tesoro legendario') : (en ? 'Chests full of gold fall from the ceiling!' : '¡Caen del techo cofres llenos de oro!'), C.gold);
+    jot('puzzle' + G.dg.n, en ? `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure.' : 'Chests full of gold fell from the ceiling.'}` : `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario.' : 'Cayeron del techo cofres llenos de oro.'}`);
     strike('note' + G.dg.n); strike('puzzleroom' + G.dg.n);
     if (typeof track === 'function') track('acertijo/resuelto');
     return true;

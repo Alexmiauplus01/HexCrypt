@@ -238,6 +238,7 @@ function populateLevel(lv) {
     }
   });
   placeWorm(lv);
+  populateMaze(lv, P); // minotauro y cofre del laberinto
   G.popTheme = undefined; G.enemies = saveE; G.floor = saveF; G.t = saveT;
 }
 // gusano gigante: en un túnel largo de una casilla de ancho, tapando el paso
@@ -265,7 +266,7 @@ function enterLevel(z, at, first) {
   const lv = G.dg.lv(z);
   G.lv = lv; G.z = z; G.floor = G.dg.diff(z);
   if (!lv.themeObj) lv.themeObj = buildTheme(lv.theme);
-  puzzleArt(lv); // estatuas y murales del acertijo
+  puzzleArt(lv); labArt(lv); // estatuas, murales y puertas del laberinto
   G.theme = lv.themeObj; R.setTheme(G.theme);
   if (G.state !== 'title') Sfx.playMusic(lv.theme % 4);
   G.enemies = lv.state.enemies; G.pickups = lv.state.pickups; G.traps = lv.state.traps; G.zones = lv.state.zones;
@@ -299,6 +300,7 @@ function touchCell(x, y) {
   const lv = G.lv, i = y * MW + x, v = lv.at(x, y);
   if (v === 0 || G.touchCd > 0) return;
   const where = `${levelName(G.z)}, ${wingOf(x, y)}`;
+  if (labTouch(lv, i, v)) return; // reja y puertas con símbolo del laberinto
   if (v === W_DOOR) { lv.openCell(i); Sfx.play('door'); burst(x + 0.5, y + 0.5, 0.5, 6, rgb(120, 90, 60), 1.4, 0.6, false, 0.06); G.touchCd = 0.3; return; }
   if (v >= W_LOCK && v < W_UP) {
     const k = lv.locks.get(i), K = KEYS[k];
@@ -978,6 +980,11 @@ function updatePickups(dt) {
         let x = k.x + Math.cos(a) * 0.8, y = k.y + Math.sin(a) * 0.8; if (G.lv.blocked(x, y, 0.3)) { x = k.x; y = k.y; }
         wakeEnemy(spawnDoppel(x, y));
       }
+      if (k.fall > 0) { // cae del techo
+        k.fall -= dt * 1.4;
+        if (k.fall <= 0) { k.fall = 0; G.shake = Math.max(G.shake, 0.25); Sfx.play('chest'); burst(k.x, k.y, 0.1, 12, rgb(150, 130, 100), 1.6, 0.6, false, 0.06); }
+        continue;
+      }
       if (!k.open && d < 0.95) openChest(k);
     }
   }
@@ -1211,6 +1218,7 @@ function update(dt) {
   updatePassives(dt); updatePassives2(dt); updateElites(dt); updateTeles(dt); comboTick();
   updateAllies(dt); updateTraps(dt); updateZones(dt); updateTimers(dt); updateAutoSkills();
   updatePickups(dt);
+  labUpdate(); // tablilla del laberinto
   updateParts(dt);
   updateVfx(dt);
   G.shake = Math.max(0, G.shake - dt * 1.6);
@@ -1255,11 +1263,11 @@ function buildItems() {
   for (const k of G.pickups) {
     if (k.type === 'gem') { const s = k.v >= 5 ? SPR.gemGold : k.v >= 3 ? SPR.gemGreen : SPR.gemBlue; items.push({ x: k.x, y: k.y, spr: s, h: 0.22, w: 0.22 * s.w / s.h, z: 0.05 + Math.sin(k.t * 4) * 0.03 }); }
     else if (k.type === 'potion') items.push({ x: k.x, y: k.y, spr: SPR.potion, h: 0.3, w: 0.2, z: 0.02 + Math.sin(k.t * 3) * 0.02 });
-    else if (k.type === 'chest') { const s = k.open ? SPR.chestOpen : SPR.chest; items.push({ x: k.x, y: k.y, spr: s, h: 0.42, w: 0.42 * s.w / s.h, z: 0 }); }
+    else if (k.type === 'chest') { const s = k.open ? SPR.chestOpen : SPR.chest; items.push({ x: k.x, y: k.y, spr: s, h: 0.42, w: 0.42 * s.w / s.h, z: k.fall > 0 ? Math.min(1, k.fall) * 1.6 : 0 }); }
     else if (k.type === 'item') { const s = itemIcon(k.item); items.push({ x: k.x, y: k.y, spr: s, h: 0.24, w: 0.24, z: 0.18 + Math.sin(k.t * 3) * 0.04, bright: true }); }
     else if (k.type === 'soul') { const pu = 1 + Math.sin(k.t * 4) * 0.1; items.push({ x: k.x, y: k.y, spr: SPR.orbIce || SPR.orbBlue, w: 0.45 * pu, h: 0.45 * pu, z: 0.35 + Math.sin(k.t * 2) * 0.05, bright: true, add: true }); }
     else if (k.type === 'portal') { const s = k.back ? SPR.orbPurple : SPR.orbGreen, pu = 1 + Math.sin(k.t * 5) * 0.08; items.push({ x: k.x, y: k.y, spr: s, w: 1.1 * pu, h: 1.5 * pu, z: 0.05, bright: true, add: true }); }
-    else if (k.type === 'note') items.push({ x: k.x, y: k.y, spr: SPR.noteItem, h: 0.11, w: 0.15, z: 0.01 });
+    else if (k.type === 'note') items.push({ x: k.x, y: k.y, spr: SPR.noteItem, h: 0.1, w: 0.18, z: 0.26 + Math.sin(k.t * 2.5) * 0.04, bright: true }); // pergamino flotando
     else if (k.type === 'torch') items.push({ x: k.x, y: k.y, spr: SPR.torchItem, h: 0.36, w: 0.36 * SPR.torchItem.w / SPR.torchItem.h, z: 0 });
     else if (k.type === 'gold') items.push({ x: k.x, y: k.y, spr: SPR.coins, h: 0.13, w: 0.13 * SPR.coins.w / SPR.coins.h, z: 0.01 });
     else if (k.type === 'key') { const s = SPR.keys[k.key]; items.push({ x: k.x, y: k.y, spr: s, h: 0.3, w: 0.3 * s.w / s.h, z: 0.25 + Math.sin(k.t * 3) * 0.05, bright: true }); }
