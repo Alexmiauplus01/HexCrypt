@@ -34,7 +34,7 @@ Entra en mazmorras de varios niveles generadas al azar, saquea cofres, encuentra
 - **Pociones**: curan la vida entera (`H`) y, si vas a morir con alguna encima, se beben solas. Se vuelven escasas si acumulas 5 o más.
 - **Enemigos**: aparecen más cuanto más tiempo pasas en una sala y llegan **oleadas** cada 2 minutos. Te rodean, algunos anuncian sus golpes con un círculo rojo y hay élites y chamanes. Un arco rojo junto a la mirilla indica de dónde viene cada golpe. Se miden contigo, así que siempre suponen un reto.
 - **Botín**: seis huecos de equipo (sin mochila). Lo que no quieras se recicla por oro y fragmentos, que el **herrero** usa para reforjar. La rareza mejora con cada mazmorra, y desde la 3.ª las mazmorras son más hondas y traen sorpresas.
-- **Acertijos**: en algún cadáver encontrarás notas ensangrentadas con pistas de salas misteriosas, y en las profundidades un laberinto con un enigma tallado en piedra y un minotauro guardando la entrada. Acierta y habrá tesoros; equivócate y lo pagarás.
+- **Acertijos**: cada mazmorra esconde una historia en tres notas ensangrentadas que te llevan, nivel a nivel, hasta su prueba: estatuas, palancas o una balanza. Y en las profundidades, un laberinto que cambia, con un enigma tallado en piedra y un minotauro guardando la entrada. Acierta y habrá tesoros; equivócate y lo pagarás.
 - **Antorchas**: sin luz solo ves la penumbra cercana; cada antorcha arde 4 minutos.
 
 Encontrarás un **mercader** y un **herrero** en cada mazmorra, **fantasmas rencorosos** de tus personajes caídos, jefes distintos según la zona, y la partida se guarda sola (CONTINUAR en el título).

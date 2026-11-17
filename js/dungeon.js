@@ -123,7 +123,7 @@ class Dungeon {
     const mt = apart.length ? pick(apart) : free.length ? pick(free) : null;
     if (mt) mt.r.type = 'mentor';
     // 5c. acertijo de las estatuas (js/puzzles.js): la sala en un nivel y la nota que da la pista en otro
-    planPuzzle(this);
+    planChain(this);
     // 6. puertas de madera en otros huecos de sala
     for (const z of this.zs) {
       const lv = this.levels[z];
@@ -229,6 +229,7 @@ class Dungeon {
       lv.npcs.push({ type: 'mentor', x: r.cx + 0.5, y: r.cy + 0.5 });
     }
     if (r.type === 'estatuas') furnishPuzzle(lv, r);
+    furnishChain(lv, r);
     if (r.type === 'santuario') { r.shrine = lv.addDecor('altar', r.cx + 0.5, r.cy + 0.5, true); r.shrine.used = false; lv.shrines.push(r.shrine); }
     // ---- salas temáticas
     const ri = lv.rooms.indexOf(r);

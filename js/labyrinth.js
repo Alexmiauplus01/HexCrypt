@@ -88,7 +88,7 @@ function carveMaze(lv) {
     const doors = [{ i: goodI, sym: rd.ok }].concat(falseDoors.map((i, k) => ({ i, sym: others[k] })));
     const mino = inPath[Math.min(inPath.length - 1, Math.max(0, inPath.length - 4))];
     lv.maze = {
-      x0, y0, w: TW, h: TH, state: 0, ok: rd.ok, riddle: LAB_RIDDLES.indexOf(rd), doors, gate: outPath ? gateI : -1,
+      x0, y0, w: TW, h: TH, state: 0, ok: rd.ok, goodI, riddle: LAB_RIDDLES.indexOf(rd), doors, gate: outPath ? gateI : -1,
       prize: { x: rx, y: py0, w: pw - 1, h: ph }, entry: { x: x0 + 1.5, y: ey + 0.5 }, tablet: { x: x0 + 1.25, y: ey + 0.5 },
       mino: { x: mino % MW + 0.5, y: ((mino / MW) | 0) + 0.5 },
     };
@@ -173,8 +173,14 @@ function labTouch(lv, i, v) {
   }
   if (v < W_SYM || v >= W_SYM + LAB_SYMS.length) return false;
   const sym = LAB_SYMS[v - W_SYM], en = labEN();
+  if (M.state) { toast(en ? 'THE DOOR DOES NOT MOVE' : 'LA PUERTA NO SE MUEVE', false); G.touchCd = 1; return true; }
   if (sym.id === M.ok) {
-    M.state = 1; lv.openCell(i); if (M.gate >= 0) lv.openCell(M.gate);
+    const goodI = M.goodI !== undefined ? M.goodI : M.doors[0].i;
+    M.state = 1; lv.openCell(goodI); if (M.gate >= 0) lv.openCell(M.gate);
+    if (i !== goodI) { // el símbolo bueno se movió a otra puerta: un pasaje te lleva a la sala del tesoro
+      const p = G.p; vfxBlink(p.x, p.y, 'void'); p.x = M.prize.x + M.prize.w / 2; p.y = M.prize.y + 0.6; vfxBlink(p.x, p.y, 'holy');
+      logMsg(en ? 'A hidden passage takes you to the treasure room' : 'Un pasaje oculto te lleva a la sala del tesoro', C.cyan);
+    }
     Sfx.play('portal'); G.flashFx = 0.6; G.shake = Math.max(G.shake, 0.3);
     toast(en ? 'THE RIGHT SYMBOL: THE DOOR OPENS' : 'EL SÍMBOLO CORRECTO: LA PUERTA SE ABRE', true);
     logMsg(en ? `It was ${sym.en}. The treasure room awaits` : `Era ${sym.es}. Te espera la sala del tesoro`, C.gold);
@@ -185,10 +191,20 @@ function labTouch(lv, i, v) {
     toast(en ? 'A FALSE DOOR! SOMETHING DRAGS YOU AWAY...' : '¡UNA PUERTA FALSA! ALGO TE ARRASTRA LEJOS...', true);
     logMsg(en ? `It was not ${sym.en}...` : `No era ${sym.es}...`, C.red);
     if (typeof track === 'function') track('laberinto/puerta-falsa');
+    labShuffle(lv);
     labTeleport();
   }
   G.touchCd = 1;
   return true;
+}
+// el laberinto cambia: tras cada puerta falsa los símbolos se recolocan (el bueno, en otra puerta)
+function labShuffle(lv) {
+  const M = lv.maze, n = M.doors.length; if (n < 2) return;
+  const syms = M.doors.map(d => d.sym), before = syms.indexOf(M.ok);
+  for (let t = 0; t < 12; t++) { syms.sort(() => Math.random() - 0.5); if (syms.indexOf(M.ok) !== before) break; }
+  M.doors.forEach((d, k) => { d.sym = syms[k]; lv.cells[d.i] = W_SYM + LAB_SYMS.findIndex(s => s.id === d.sym); });
+  M.shifts = (M.shifts || 0) + 1;
+  if (M.shifts === 1) jot('mazeshift' + G.dg.n, labEN() ? 'The labyrinth doors change their symbols every time I get one wrong.' : 'Las puertas del laberinto cambian de símbolo cada vez que me equivoco.');
 }
 // a un punto al azar de la mazmorra al que se llega sin llaves (nunca tras una puerta cerrada)
 function labTeleport() {

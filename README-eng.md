@@ -34,7 +34,7 @@ Delve into randomly generated multi-level dungeons, loot chests, find keys, face
 - **Potions**: they restore your full health (`H`) and, if you are about to die with one on you, you drink it automatically. They become scarce once you hoard 5 or more.
 - **Enemies**: more of them show up the longer you stay in a room, and **waves** arrive every 2 minutes. They surround you, some telegraph their blows with a red circle, and there are elites and shamans. A red arc next to the crosshair shows where each hit comes from. They scale to you, so they always stay a challenge.
 - **Loot**: six equipment slots (no backpack). Anything you don't want can be recycled for gold and shards, which the **blacksmith** uses to reforge. Rarity improves with every dungeon, and from the 3rd one on, dungeons go deeper and bring surprises.
-- **Puzzles**: some corpses carry bloodstained notes with clues about mysterious rooms, and deep below lies a labyrinth with a riddle carved in stone and a minotaur guarding its entrance. Get it right for treasure; get it wrong and you will pay.
+- **Puzzles**: every dungeon hides a story in three bloodstained notes that lead you, level by level, to its trial: statues, levers or a scale. And deep below lies a shifting labyrinth with a riddle carved in stone and a minotaur guarding its entrance. Get it right for treasure; get it wrong and you will pay.
 - **Torches**: without light you only see the dim surroundings; each torch burns for 4 minutes.
 
 You will find a **merchant** and a **blacksmith** in every dungeon, **vengeful ghosts** of your fallen characters and different bosses depending on the area, and the game saves by itself (CONTINUE on the title screen).

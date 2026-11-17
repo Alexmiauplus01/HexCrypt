@@ -128,6 +128,7 @@ function setClass(id, evolving) {
 
 function newRun(cls) {
   G.equip = { anillo1: null, anillo2: null, amuleto: null, armadura: null, arma: null, escudo: null }; G.swap = null; G.wskin = null;
+  G.chainSeed = randi(0, 2); // qué historia (estatuas, palancas o balanza) toca en cada mazmorra
   G.souls = 0; G.upg = {}; G.pasOn = []; G.learn = null; G.dgScale = null; G.pact = null; G.nightmare = false; G.kills = 0; G.totalTime = 0; G.won = false; G.pending = 0; G.log = []; G.toasts = []; G.evolveReady = false; G.choice = null; G.allies = [];
   G.p = makePlayer(cls); setClass(cls, false);
   G.inv = { torch: 3, potion: 1, map: 0, rune: 0 }; // kit inicial
@@ -212,7 +213,7 @@ function populateLevel(lv) {
       }
       case 'secreta': box = chest(gold * rand(6, 10), 'potion'); break;
       case 'trampa': box = chest(gold * rand(5, 8)); break;
-      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': break;
+      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': case 'palancas': case 'balanza': break;
       case 'biblioteca': // saber antiguo: experiencia en gemas y algún erudito corrupto
         for (let k = 0; k < randi(2, 4); k++) { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'gem', x, y, v: 5, vx: 0, vy: 0, t: rand(0, 6) }); }
         foes(randi(1, 2), 'cultist'); if (Math.random() < 0.35) box = chest(gold * rand(3, 5));
@@ -266,7 +267,7 @@ function enterLevel(z, at, first) {
   const lv = G.dg.lv(z);
   G.lv = lv; G.z = z; G.floor = G.dg.diff(z);
   if (!lv.themeObj) lv.themeObj = buildTheme(lv.theme);
-  puzzleArt(lv); labArt(lv); // estatuas, murales y puertas del laberinto
+  puzzleArt(lv); labArt(lv); chainArt(lv); // estatuas, murales y puertas del laberinto
   G.theme = lv.themeObj; R.setTheme(G.theme);
   if (G.state !== 'title') Sfx.playMusic(lv.theme % 4);
   G.enemies = lv.state.enemies; G.pickups = lv.state.pickups; G.traps = lv.state.traps; G.zones = lv.state.zones;
@@ -300,7 +301,7 @@ function touchCell(x, y) {
   const lv = G.lv, i = y * MW + x, v = lv.at(x, y);
   if (v === 0 || G.touchCd > 0) return;
   const where = `${levelName(G.z)}, ${wingOf(x, y)}`;
-  if (labTouch(lv, i, v)) return; // reja y puertas con símbolo del laberinto
+  if (labTouch(lv, i, v) || chainTouch(lv, i, v)) return; // reja y puertas con símbolo del laberinto
   if (v === W_DOOR) { lv.openCell(i); Sfx.play('door'); burst(x + 0.5, y + 0.5, 0.5, 6, rgb(120, 90, 60), 1.4, 0.6, false, 0.06); G.touchCd = 0.3; return; }
   if (v >= W_LOCK && v < W_UP) {
     const k = lv.locks.get(i), K = KEYS[k];
@@ -430,7 +431,7 @@ function updateRooms(dt) {
   const rIn = lv.roomOf[Math.floor(p.y) * MW + Math.floor(p.x)];
   if (rIn >= 0 && rIn !== G.roomIn) {
     G.roomIn = rIn; const r = lv.rooms[rIn];
-    if (r.type === 'estatuas') puzzleEnter(r);
+    if (r.puzzle) puzzleEnter(r);
     if (ROOM_HINT[r.type] && !r.named) { r.named = true; toast(ROOM_NAME[r.type].toUpperCase(), false); logMsg(ROOM_HINT[r.type], C.dim); }
   }
 }
@@ -1218,7 +1219,7 @@ function update(dt) {
   updatePassives(dt); updatePassives2(dt); updateElites(dt); updateTeles(dt); comboTick();
   updateAllies(dt); updateTraps(dt); updateZones(dt); updateTimers(dt); updateAutoSkills();
   updatePickups(dt);
-  labUpdate(); // tablilla del laberinto
+  labUpdate(); chainUpdate(); // tablilla del laberinto y balanza
   updateParts(dt);
   updateVfx(dt);
   G.shake = Math.max(0, G.shake - dt * 1.6);
@@ -1362,7 +1363,7 @@ function render() {
   else if (G.state === 'classselect') ui.choice(G);
   else if (G.state === 'evolve') ui.choice(G);
   else {
-    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup', 'note'].includes(G.state)) ui.hud(G);
+    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup', 'note', 'balance'].includes(G.state)) ui.hud(G);
     if (G.state === 'paused') ui.pause(G);
     else if (G.state === 'levelup') ui.levelUp(G);
     else if (G.state === 'learn') ui.learn(G);
@@ -1379,6 +1380,7 @@ function render() {
     else if (G.state === 'reward') ui.reward(G);
     else if (G.state === 'exitask') ui.exitAsk(G);
     else if (G.state === 'note') ui.note(G);
+    else if (G.state === 'balance') ui.balance(G);
     else if (G.state === 'escaped') ui.escaped(G);
     else if (G.state === 'pact') ui.pact(G);
   }
@@ -1416,6 +1418,7 @@ document.addEventListener('keydown', (ev) => {
   if (G.state === 'reward') { if (dig !== undefined) chooseReward(dig); return; }
   if (G.state === 'reforge') { const k = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[e.code], eq = SLOTS.filter(s => G.equip[s]); if (k !== undefined && eq[k]) reforgeItem(eq[k]); if (e.code === 'Escape' || e.code === 'KeyR') G.state = 'forge'; return; }
   if (G.state === 'note') { closeNote(); return; }
+  if (G.state === 'balance') { const bd = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3, Numpad5: 4 }[e.code]; if (bd !== undefined) balanceChoose(bd); else if (e.code === 'Escape') closeBalance(); return; }
   if (G.state === 'exitask') { if (dig === 0) leaveDungeon(); else if (dig === 1 || e.code === 'Escape') stayInDungeon(); return; }
   if (G.state === 'escaped') { if (dig === 0) nextDungeon(); else if (dig === 1) nextDungeon(true); else if (dig === 2) retire(); return; }
   if (G.state === 'pact') { const i = dig !== undefined ? dig : { Digit4: 3, Numpad4: 3 }[e.code]; if (i !== undefined) choosePact(i); return; }
@@ -1491,6 +1494,7 @@ function handleClick(x, y, button = 0) {
     case 'reward': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) chooseReward(h.id); break; }
     case 'reforge': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) reforgeItem(h.id); else G.state = 'forge'; break; }
     case 'note': closeNote(); break;
+    case 'balance': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) balanceChoose(h.id); break; }
     case 'exitask': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) leaveDungeon(); else stayInDungeon(); } break; }
     case 'escaped': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) nextDungeon(); else if (h.id === 1) nextDungeon(true); else retire(); } break; }
     case 'pact': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) choosePact(h.id); break; }

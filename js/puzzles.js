@@ -22,25 +22,19 @@ ROOM_NAME.estatuas = 'sala de las estatuas';
 ROOM_HINT.estatuas = 'Esta sala está impregnada de fuerzas místicas...';
 
 // ---------------------------------------------------------------- generación (desde Dungeon.build)
-function planPuzzle(dg) {
-  if (dg.zs.length < 2) return;
+// sala de las estatuas (la usa la historia de Aldric en js/chains.js): nunca en el nivel de entrada
+function planStatues(dg, z0) {
   const cand = [];
-  const z0 = dg.start ? dg.start.z : 0;
   for (const z of dg.zs) if (z !== z0) dg.levels[z].rooms.forEach(r => {
     if (r.type === 'normal' && !r.stair && r.shape !== 'round' && r.w >= 6 && r.h >= 5 && r.doors.length) cand.push({ z, r });
   });
-  if (!cand.length) return;
+  if (!cand.length) return null;
   const c = pick(cand);
   const ids = PUZ_BEASTS.map(b => b.id).sort(() => Math.random() - 0.5).slice(0, 3);
   const ok = pick(ids), broken = pick(ids.filter(i => i !== ok));
   c.r.type = 'estatuas';
   c.r.puzzle = { ids, ok, state: 0 };
-  // la nota, en el nivel donde empieza la mazmorra, junto a un cadáver
-  const spots = [];
-  dg.levels[z0].rooms.forEach(r => { if ((r.type === 'normal' || r.type === 'entrada') && r.doors.length) spots.push({ z: z0, r }); });
-  if (!spots.length) return;
-  const s = pick(spots);
-  s.r.note = puzzleNote(c.z, s.z, broken);
+  return { z: c.z, r: c.r, broken };
 }
 
 // texto de la nota: frases sueltas separadas por manchas de sangre (null)
@@ -160,8 +154,10 @@ function readNote(k) {
   k.dead = true; G.noteOpen = k.note; G.state = 'note'; mouse.fire = false;
   if (document.exitPointerLock) document.exitPointerLock();
   Sfx.play('unlock');
-  const N = k.note, b = puzBeast(N.broken), lvl = levelName(N.z);
-  jot('note' + G.dg.n, puzEN()
+  const N = k.note, en = puzEN();
+  if (N.jot) { jot('note' + G.dg.n + '_' + (N.part || 1), en ? N.jot.en : N.jot.es); return; }
+  const b = puzBeast(N.broken), lvl = levelName(N.z); // notas de partidas guardadas antes de las historias
+  jot('note' + G.dg.n, en
     ? `I found a note next to a corpse: it spoke of three statues on ${lvl.replace('Nivel', 'level')} and said they broke the ${b.en}.`
     : `Encontré una nota junto a un cadáver: hablaba de tres estatuas en el ${lvl.toLowerCase()} y de que rompieron ${b.art} ${b.es}.`);
 }
@@ -215,7 +211,7 @@ function strikeStatue(d) {
     toast(en ? `THE ${b.en.toUpperCase()} STATUE OPENS UP!` : `¡LA ESTATUA DE${b.art === 'el' ? 'L' : ' LA'} ${b.es.toUpperCase()} SE ABRE!`, true);
     logMsg(legend ? (en ? 'The statue was hiding a legendary treasure' : 'La estatua escondía un tesoro legendario') : (en ? 'Chests full of gold fall from the ceiling!' : '¡Caen del techo cofres llenos de oro!'), C.gold);
     jot('puzzle' + G.dg.n, en ? `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure.' : 'Chests full of gold fell from the ceiling.'}` : `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario.' : 'Cayeron del techo cofres llenos de oro.'}`);
-    strike('note' + G.dg.n); strike('puzzleroom' + G.dg.n);
+    chainStrike();
     if (typeof track === 'function') track('acertijo/resuelto');
     return true;
   }
@@ -237,12 +233,14 @@ function strikeStatue(d) {
   if (typeof track === 'function') track('acertijo/fallado');
   return true;
 }
-// al entrar por primera vez en la sala, el diario apunta qué estatuas hay
+// al entrar por primera vez en una sala de prueba, el diario apunta lo que hay
 function puzzleEnter(r) {
   const P = r.puzzle; if (!P || r.jotted) return;
   r.jotted = true;
-  const names = P.ids.map(puzBeast), en = puzEN();
-  jot('puzzleroom' + G.dg.n, en
-    ? `On ${levelName(G.z).replace('Nivel', 'level')} there is a room with three statues: ${names.map(b => 'a ' + b.en).join(', ')}. The murals keep repeating one creature.`
-    : `En el ${levelName(G.z).toLowerCase()} hay una sala con tres estatuas: ${names.map(b => (b.art === 'la' ? 'una ' : 'un ') + b.es).join(', ')}. Los murales repiten una de las criaturas.`);
+  const en = puzEN(), L = en ? levelName(G.z).replace('Nivel', 'level') : levelName(G.z).toLowerCase();
+  let t;
+  if (r.type === 'palancas') t = en ? `On ${L} there is a room with three levers (flame, snowflake and lightning) and a sealed slab.` : `En el ${L} hay una sala con tres palancas (llama, copo y rayo) y una losa sellada.`;
+  else if (r.type === 'balanza') t = en ? `On ${L} there is a bronze scale next to a sealed slab. It asks for gold.` : `En el ${L} hay una balanza de bronce junto a una losa sellada. Pide oro.`;
+  else { const names = P.ids.map(puzBeast); t = en ? `On ${L} there is a room with three statues: ${names.map(b => 'a ' + b.en).join(', ')}. The murals keep repeating one creature.` : `En el ${L} hay una sala con tres estatuas: ${names.map(b => (b.art === 'la' ? 'una ' : 'un ') + b.es).join(', ')}. Los murales repiten una de las criaturas.`; }
+  jot('puzzleroom' + G.dg.n, t);
 }
