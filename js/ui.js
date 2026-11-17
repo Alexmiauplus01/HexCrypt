@@ -803,15 +803,15 @@ class UI {
       this.text(cx + 8, yy + 6, t, hot ? C.goldL : C.gold, { align: 'center' });
     });
   }
-  // balanza de la historia de la mercader: cuánto oro depositar
-  balance(G) {
-    const B = G.balance; if (!B) return;
+  // menú de una prueba (balanza, copas): título, aviso y opciones numeradas
+  tmenu(G) {
+    const M = G.tmenu; if (!M) return;
     this.darken(VX, VY, VW, VH, 0.55);
     const cx = VX + VW / 2, en = typeof LANG !== 'undefined' && LANG === 'en';
-    this.text(cx, 30, 'LA BALANZA', C.gold, { align: 'center', scale: 3, grad: GOLD_GRAD, shadow: 'outline' });
-    this.text(cx, 62, en ? 'IT ASKS FOR EXACT GOLD: LESS AND IT SWALLOWS EVERYTHING' : 'PIDE ORO EXACTO: SI PONES MENOS, SE LO TRAGA TODO', C.dim, { align: 'center' });
-    this.text(cx, 74, (en ? 'YOU CARRY ' : 'LLEVAS ') + G.loot + (en ? ' GOLD' : ' DE ORO'), C.goldL, { align: 'center' });
-    this.buttons(cx, 90, B.opts.map(a => (en ? `PUT ${a} GOLD` : `DEPOSITAR ${a} DE ORO`)).concat([en ? 'LEAVE' : 'MARCHARSE']));
+    this.text(cx, 30, M.title, C.gold, { align: 'center', scale: 3, grad: GOLD_GRAD, shadow: 'outline' });
+    this.text(cx, 62, M.sub, C.dim, { align: 'center' });
+    if (M.gold) this.text(cx, 74, (en ? 'YOU CARRY ' : 'LLEVAS ') + G.loot + (en ? ' GOLD' : ' DE ORO'), C.goldL, { align: 'center' });
+    this.buttons(cx, 90, M.opts.concat([en ? 'LEAVE' : 'MARCHARSE']));
   }
   // nota ensangrentada del acertijo: pergamino con frases sueltas y manchas de sangre donde no se puede leer
   note(G) {

@@ -168,5 +168,15 @@ const Sfx = (() => {
   }
   function toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.45 * vol; return muted; }
   function setVolume(v) { vol = v; muted = v <= 0; if (master) master.gain.value = 0.45 * vol; }
-  return { init, play, toggle, setVolume, playMusic, stopMusic, setMusic };
+  // campana de la prueba de las campanas: tono propio por campana (do, mi, sol, do agudo) con armónico metálico
+  function bell(k) {
+    if (!ac || muted) return;
+    const f = [523.25, 659.25, 783.99, 1046.5][k] || 600, t = ac.currentTime;
+    for (const [mul, v, dur, type] of [[1, 0.3, 1.6, 'sine'], [2.76, 0.07, 0.7, 'sine'], [0.5, 0.06, 1.0, 'triangle']]) {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f * mul;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    }
+  }
+  return { init, play, toggle, setVolume, playMusic, stopMusic, setMusic, bell };
 })();

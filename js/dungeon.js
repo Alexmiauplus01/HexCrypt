@@ -52,6 +52,7 @@ class Dungeon {
 
   build() {
     this.levels = {}; this.links = [];
+    this.trials = trialsFor(this.n); // las dos pruebas de esta mazmorra (js/chains.js)
     // 1. trazado de cada nivel (tema según profundidad); un laberinto en uno de ellos
     for (const z of this.zs) {
       const th = ((this.n - 1) + Math.abs(z) + (z > 0 ? 2 : 0)) % THEME_COUNT;
@@ -62,7 +63,11 @@ class Dungeon {
       this.levels[z] = lv;
     }
     // 1b. laberinto (js/labyrinth.js) en el primer nivel, al azar, donde quepa; después se pintan los niveles
-    for (const z of this.zs.slice().sort(() => Math.random() - 0.5)) if (carveMaze(this.levels[z])) break;
+    if (this.trials.includes('laberinto')) {
+      let ok = false;
+      for (const z of this.zs.slice().sort(() => Math.random() - 0.5)) if (carveMaze(this.levels[z])) { ok = true; break; }
+      if (!ok) this.trials = this.trials.filter(t => t !== 'laberinto'); // sin sitio: otra prueba ocupa su lugar
+    }
     for (const z of this.zs) { const lv = this.levels[z]; lv.paint(this.n * 31 + z * 7); applyMaze(lv); }
     // 2. entrada (salida al exterior) en el nivel 0
     const L0 = this.levels[0];
@@ -123,7 +128,7 @@ class Dungeon {
     const mt = apart.length ? pick(apart) : free.length ? pick(free) : null;
     if (mt) mt.r.type = 'mentor';
     // 5c. acertijo de las estatuas (js/puzzles.js): la sala en un nivel y la nota que da la pista en otro
-    planChain(this);
+    planTrials(this);
     // 6. puertas de madera en otros huecos de sala
     for (const z of this.zs) {
       const lv = this.levels[z];

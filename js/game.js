@@ -128,7 +128,7 @@ function setClass(id, evolving) {
 
 function newRun(cls) {
   G.equip = { anillo1: null, anillo2: null, amuleto: null, armadura: null, arma: null, escudo: null }; G.swap = null; G.wskin = null;
-  G.chainSeed = randi(0, 2); // qué historia (estatuas, palancas o balanza) toca en cada mazmorra
+  G.trialDeck = newTrialDeck(); // bote de pruebas barajado: cada mazmorra coge las dos siguientes (js/chains.js)
   G.souls = 0; G.upg = {}; G.pasOn = []; G.learn = null; G.dgScale = null; G.pact = null; G.nightmare = false; G.kills = 0; G.totalTime = 0; G.won = false; G.pending = 0; G.log = []; G.toasts = []; G.evolveReady = false; G.choice = null; G.allies = [];
   G.p = makePlayer(cls); setClass(cls, false);
   G.inv = { torch: 3, potion: 1, map: 0, rune: 0 }; // kit inicial
@@ -213,7 +213,8 @@ function populateLevel(lv) {
       }
       case 'secreta': box = chest(gold * rand(6, 10), 'potion'); break;
       case 'trampa': box = chest(gold * rand(5, 8)); break;
-      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': case 'palancas': case 'balanza': break;
+      case 'santuario': case 'arena': case 'mercader': case 'herrero': case 'mentor': case 'fuente': case 'estatuas': case 'palancas': case 'balanza': case 'campanas': case 'copas': case 'braseros': break;
+      case 'baldosas': P.push({ type: 'chest', x: r.cx + 0.5, y: r.cy + 0.5, t: 0, gold: Math.round(gold * rand(12, 18)), item: 'potion', eqItem: makeItem('vault', null, { rar: Math.random() < 0.5 ? 'legendario' : 'epico' }), trial: 'baldosas' }); used.add(r.cy * MW + r.cx); break;
       case 'biblioteca': // saber antiguo: experiencia en gemas y algún erudito corrupto
         for (let k = 0; k < randi(2, 4); k++) { const [x, y] = roomSpot(lv, r, used); P.push({ type: 'gem', x, y, v: 5, vx: 0, vy: 0, t: rand(0, 6) }); }
         foes(randi(1, 2), 'cultist'); if (Math.random() < 0.35) box = chest(gold * rand(3, 5));
@@ -1363,7 +1364,7 @@ function render() {
   else if (G.state === 'classselect') ui.choice(G);
   else if (G.state === 'evolve') ui.choice(G);
   else {
-    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup', 'note', 'balance'].includes(G.state)) ui.hud(G);
+    if (!['learn', 'mentor', 'pact', 'paused', 'forge', 'reforge', 'reward', 'inventory', 'shop', 'swap', 'levelup', 'note', 'tmenu'].includes(G.state)) ui.hud(G);
     if (G.state === 'paused') ui.pause(G);
     else if (G.state === 'levelup') ui.levelUp(G);
     else if (G.state === 'learn') ui.learn(G);
@@ -1380,7 +1381,7 @@ function render() {
     else if (G.state === 'reward') ui.reward(G);
     else if (G.state === 'exitask') ui.exitAsk(G);
     else if (G.state === 'note') ui.note(G);
-    else if (G.state === 'balance') ui.balance(G);
+    else if (G.state === 'tmenu') ui.tmenu(G);
     else if (G.state === 'escaped') ui.escaped(G);
     else if (G.state === 'pact') ui.pact(G);
   }
@@ -1418,7 +1419,7 @@ document.addEventListener('keydown', (ev) => {
   if (G.state === 'reward') { if (dig !== undefined) chooseReward(dig); return; }
   if (G.state === 'reforge') { const k = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[e.code], eq = SLOTS.filter(s => G.equip[s]); if (k !== undefined && eq[k]) reforgeItem(eq[k]); if (e.code === 'Escape' || e.code === 'KeyR') G.state = 'forge'; return; }
   if (G.state === 'note') { closeNote(); return; }
-  if (G.state === 'balance') { const bd = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3, Numpad5: 4 }[e.code]; if (bd !== undefined) balanceChoose(bd); else if (e.code === 'Escape') closeBalance(); return; }
+  if (G.state === 'tmenu') { const bd = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3, Numpad5: 4 }[e.code]; if (bd !== undefined) tmenuChoose(bd); else if (e.code === 'Escape') closeTrialMenu(); return; }
   if (G.state === 'exitask') { if (dig === 0) leaveDungeon(); else if (dig === 1 || e.code === 'Escape') stayInDungeon(); return; }
   if (G.state === 'escaped') { if (dig === 0) nextDungeon(); else if (dig === 1) nextDungeon(true); else if (dig === 2) retire(); return; }
   if (G.state === 'pact') { const i = dig !== undefined ? dig : { Digit4: 3, Numpad4: 3 }[e.code]; if (i !== undefined) choosePact(i); return; }
@@ -1494,7 +1495,7 @@ function handleClick(x, y, button = 0) {
     case 'reward': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) chooseReward(h.id); break; }
     case 'reforge': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) reforgeItem(h.id); else G.state = 'forge'; break; }
     case 'note': closeNote(); break;
-    case 'balance': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) balanceChoose(h.id); break; }
+    case 'tmenu': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) tmenuChoose(h.id); break; }
     case 'exitask': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) leaveDungeon(); else stayInDungeon(); } break; }
     case 'escaped': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) { if (h.id === 0) nextDungeon(); else if (h.id === 1) nextDungeon(true); else retire(); } break; }
     case 'pact': { const h = ui.hot.find(h => ui.hit(h.x, h.y, h.w, h.h)); if (h) choosePact(h.id); break; }

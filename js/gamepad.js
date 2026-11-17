@@ -99,7 +99,7 @@ function pollPad(dt) {
     if (G.state === 'paused') resumeGame();
     else if (G.state === 'options') G.state = 'title';
     else if (G.state === 'controls') { G.state = G.ctlBack || 'title'; G.rebind = null; }
-    else if (['journal', 'map', 'inventory', 'shop', 'forge', 'mentor', 'exitask', 'note', 'balance'].includes(G.state)) padKey('Escape');
+    else if (['journal', 'map', 'inventory', 'shop', 'forge', 'mentor', 'exitask', 'note', 'tmenu'].includes(G.state)) padKey('Escape');
     PAD.focus = -1;
   }
 }

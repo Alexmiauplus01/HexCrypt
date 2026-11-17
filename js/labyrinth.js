@@ -185,7 +185,7 @@ function labTouch(lv, i, v) {
     toast(en ? 'THE RIGHT SYMBOL: THE DOOR OPENS' : 'EL SÍMBOLO CORRECTO: LA PUERTA SE ABRE', true);
     logMsg(en ? `It was ${sym.en}. The treasure room awaits` : `Era ${sym.es}. Te espera la sala del tesoro`, C.gold);
     jot('maze' + G.dg.n, en ? `I solved the labyrinth riddle: the answer was ${sym.en}.` : `Resolví el acertijo del laberinto: la respuesta era ${sym.es}.`);
-    strike('mazeriddle' + G.dg.n);
+    strike('mazeriddle' + G.dg.n); chainStrike('laberinto');
     if (typeof track === 'function') track('laberinto/resuelto');
   } else {
     toast(en ? 'A FALSE DOOR! SOMETHING DRAGS YOU AWAY...' : '¡UNA PUERTA FALSA! ALGO TE ARRASTRA LEJOS...', true);

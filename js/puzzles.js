@@ -155,7 +155,7 @@ function readNote(k) {
   if (document.exitPointerLock) document.exitPointerLock();
   Sfx.play('unlock');
   const N = k.note, en = puzEN();
-  if (N.jot) { jot('note' + G.dg.n + '_' + (N.part || 1), en ? N.jot.en : N.jot.es); return; }
+  if (N.jot) { jot('note' + G.dg.n + '_' + (N.kind || 'x') + '_' + (N.part || 1), en ? N.jot.en : N.jot.es); return; }
   const b = puzBeast(N.broken), lvl = levelName(N.z); // notas de partidas guardadas antes de las historias
   jot('note' + G.dg.n, en
     ? `I found a note next to a corpse: it spoke of three statues on ${lvl.replace('Nivel', 'level')} and said they broke the ${b.en}.`
@@ -210,8 +210,8 @@ function strikeStatue(d) {
     }
     toast(en ? `THE ${b.en.toUpperCase()} STATUE OPENS UP!` : `¡LA ESTATUA DE${b.art === 'el' ? 'L' : ' LA'} ${b.es.toUpperCase()} SE ABRE!`, true);
     logMsg(legend ? (en ? 'The statue was hiding a legendary treasure' : 'La estatua escondía un tesoro legendario') : (en ? 'Chests full of gold fall from the ceiling!' : '¡Caen del techo cofres llenos de oro!'), C.gold);
-    jot('puzzle' + G.dg.n, en ? `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure.' : 'Chests full of gold fell from the ceiling.'}` : `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario.' : 'Cayeron del techo cofres llenos de oro.'}`);
-    chainStrike();
+    trialJot('estatuas', `Resolví el acertijo de las estatuas: era ${b.art} ${b.es}, como en los murales. ${legend ? 'Dentro había un tesoro legendario.' : 'Cayeron del techo cofres llenos de oro.'}`, `I solved the statues: it was the ${b.en}, like in the murals. ${legend ? 'Inside there was a legendary treasure.' : 'Chests full of gold fell from the ceiling.'}`);
+    chainStrike('estatuas');
     if (typeof track === 'function') track('acertijo/resuelto');
     return true;
   }
@@ -228,7 +228,7 @@ function strikeStatue(d) {
   }
   toast(en ? 'THE STATUES CRUMBLE!' : '¡LAS ESTATUAS SE DESMORONAN!', true);
   logMsg(en ? `It was not the ${b.en}... a horde answers the noise` : `No era ${b.art} ${b.es}... una horda acude al estruendo`, C.red);
-  jot('puzzle' + G.dg.n, en ? `I broke the ${b.en} statue. It was the wrong one: the statues crumbled and a horde came for me.` : `Rompí la estatua de${b.art === 'el' ? 'l' : ' la'} ${b.es}. No era la buena: las estatuas se derrumbaron y vino una horda a por mí.`);
+  trialJot('estatuas', `Rompí la estatua de${b.art === 'el' ? 'l' : ' la'} ${b.es}. No era la buena: las estatuas se derrumbaron y vino una horda a por mí.`, `I broke the ${b.en} statue. It was the wrong one: the statues crumbled and a horde came for me.`);
   strike('note' + G.dg.n); strike('puzzleroom' + G.dg.n);
   if (typeof track === 'function') track('acertijo/fallado');
   return true;
@@ -239,8 +239,15 @@ function puzzleEnter(r) {
   r.jotted = true;
   const en = puzEN(), L = en ? levelName(G.z).replace('Nivel', 'level') : levelName(G.z).toLowerCase();
   let t;
-  if (r.type === 'palancas') t = en ? `On ${L} there is a room with three levers (flame, snowflake and lightning) and a sealed slab.` : `En el ${L} hay una sala con tres palancas (llama, copo y rayo) y una losa sellada.`;
-  else if (r.type === 'balanza') t = en ? `On ${L} there is a bronze scale next to a sealed slab. It asks for gold.` : `En el ${L} hay una balanza de bronce junto a una losa sellada. Pide oro.`;
+  const T = {
+    palancas: [`En el ${L} hay una sala con tres palancas (llama, copo y rayo) y una losa sellada.`, `On ${L} there is a room with three levers (flame, snowflake and lightning) and a sealed slab.`],
+    balanza: [`En el ${L} hay una balanza de bronce junto a una losa sellada. Pide oro.`, `On ${L} there is a bronze scale next to a sealed slab. It asks for gold.`],
+    campanas: [`En el ${L} hay una caja de música, cuatro campanas en las paredes y una losa sellada.`, `On ${L} there is a music box, four bells on the walls and a sealed slab.`],
+    baldosas: [`En el ${L} hay una sala con losas marcadas con símbolos y un cofre en el centro.`, `On ${L} there is a room with tiles marked with symbols and a chest in the middle.`],
+    copas: [`En el ${L} hay un altar con tres copas: de oro, de plata y de hueso.`, `On ${L} there is an altar with three cups: gold, silver and bone.`],
+    braseros: [`En el ${L} hay cinco braseros apagados bajo un mural de estrellas, y una losa sellada.`, `On ${L} there are five unlit braziers under a star mural, and a sealed slab.`],
+  }[r.type];
+  if (T) t = en ? T[1] : T[0];
   else { const names = P.ids.map(puzBeast); t = en ? `On ${L} there is a room with three statues: ${names.map(b => 'a ' + b.en).join(', ')}. The murals keep repeating one creature.` : `En el ${L} hay una sala con tres estatuas: ${names.map(b => (b.art === 'la' ? 'una ' : 'un ') + b.es).join(', ')}. Los murales repiten una de las criaturas.`; }
-  jot('puzzleroom' + G.dg.n, t);
+  jot('puzzleroom' + G.dg.n + '_' + r.type, t);
 }
