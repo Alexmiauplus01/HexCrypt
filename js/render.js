@@ -323,6 +323,7 @@ class Renderer {
         const tt = 1 / (1 + d * d * tk);
         sl[0] += AR + TR * tt; sl[1] += AG + TG * tt; sl[2] += AB + TB * tt;
       }
+      if (it.tint) { sl[0] *= it.tint[0]; sl[1] *= it.tint[1]; sl[2] *= it.tint[2]; } // estado alterado (escarcha, veneno, fuego...)
       const fk = it.bright ? 1 : clamp(1 - d / fogD, 0, 1);
       this.drawSprite(it, sl, fk);
     }

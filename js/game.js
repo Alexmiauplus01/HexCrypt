@@ -1244,6 +1244,43 @@ function update(dt) {
   }
 }
 
+// ---------------------------------------------------------------- Estados alterados de los enemigos, a la vista
+// tinte del sprite: escarcha/lentitud azul, veneno verde, ácido amarillento, fuego naranja que palpita
+function statusTint(e, tm) {
+  let t = null;
+  const mix = (r, g, b) => { t = t ? [t[0] * r, t[1] * g, t[2] * b] : [r, g, b]; };
+  if (e.slow > 0 || e.slowZ > 0) mix(0.62, 0.86, 1.55);
+  if (e.poison > 0) mix(0.75, 1.3, 0.65);
+  if (e.corrode > 0) mix(1.2, 1.25, 0.55);
+  if (e.burn > 0) { const k = 0.5 + 0.5 * Math.sin(tm * 9 + e.wob); mix(1.25 + 0.3 * k, 0.9, 0.6); }
+  return t;
+}
+// símbolos sobre la cabeza: estrellas girando si está aturdido; copo (lento), gota (ácido), diana (marcado), flecha (débil)
+function statusSprites() {
+  if (SPR.stStar) return;
+  const mk = (rows, col) => { const h = rows.length, w = rows[0].length, px = new Uint32Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const ch = rows[y][x]; if (ch === '#') px[y * w + x] = rgb(...col); else if (ch === 'o') px[y * w + x] = rgb(30, 22, 18); } return { w, h, px, flash: px }; };
+  SPR.stStar = mk(['...#...', '..###..', '#######', '.#####.', '.##.##.', '#.....#'], [255, 226, 90]);
+  SPR.stSlow = mk(['..#.#..', '#..#..#', '.#.#.#.', '###.###', '.#.#.#.', '#..#..#', '..#.#..'], [150, 210, 255]);
+  SPR.stAcid = mk(['..#..', '..#..', '.###.', '#####', '#####', '.###.'], [200, 230, 60]);
+  SPR.stMark = mk(['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'], [240, 50, 40]);
+  SPR.stWeak = mk(['.###.', '.###.', '.###.', '#####', '.###.', '..#..'], [190, 110, 255]);
+}
+function statusIcons(e, top, tm, items) {
+  statusSprites();
+  if (e.stun > 0) for (let k = 0; k < 3; k++) { // estrellas dando vueltas alrededor de la cabeza
+    const a = tm * 4.5 + k * TAU / 3, r = 0.14 + e.def.r * 0.25;
+    items.push({ x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, spr: SPR.stStar, w: 0.08, h: 0.08, z: top + 0.03 + Math.sin(a * 2) * 0.02, bright: true });
+  }
+  const ic = [];
+  if (e.slow > 0 || e.slowZ > 0) ic.push(SPR.stSlow);
+  if (e.corrode > 0) ic.push(SPR.stAcid);
+  if (e.mark > 0) ic.push(SPR.stMark);
+  if (e.weak > 0) ic.push(SPR.stWeak);
+  if (!ic.length) return;
+  const p = G.p, rx = -Math.sin(p.a), ry = Math.cos(p.a), z = top + (e.stun > 0 ? 0.13 : 0.06) + Math.sin(tm * 3 + e.wob) * 0.01;
+  ic.forEach((s, i) => { const o = (i - (ic.length - 1) / 2) * 0.12; items.push({ x: e.x + rx * o, y: e.y + ry * o, spr: s, w: 0.08, h: 0.08 * s.h / s.w, z, bright: true }); });
+}
+
 // ---------------------------------------------------------------- Dibujado
 function buildItems() {
   const items = [];
@@ -1261,7 +1298,9 @@ function buildItems() {
     const f = d.worm ? (e.openT > 0 ? 1 : 0) : d.fly ? ((tm * 8 + e.wob) | 0) & 1 : ((e.walk * 1.6) | 0) & 1;
     const s = fr[f];
     const eh = d.h * (e.big || 1);
-    items.push({ x: e.x, y: e.y, spr: s, flash: e.flash > 0, h: eh, w: eh * s.w / s.h, z: d.z + (d.fly ? Math.sin(e.wob * 0.7) * 0.07 : 0) });
+    const ez = d.z + (d.fly ? Math.sin(e.wob * 0.7) * 0.07 : 0);
+    items.push({ x: e.x, y: e.y, spr: s, flash: e.flash > 0, h: eh, w: eh * s.w / s.h, z: ez, tint: statusTint(e, tm) });
+    statusIcons(e, ez + eh, tm, items);
   }
   for (const k of G.pickups) {
     if (k.type === 'gem') { const s = k.v >= 5 ? SPR.gemGold : k.v >= 3 ? SPR.gemGreen : SPR.gemBlue; items.push({ x: k.x, y: k.y, spr: s, h: 0.22, w: 0.22 * s.w / s.h, z: 0.05 + Math.sin(k.t * 4) * 0.03 }); }
