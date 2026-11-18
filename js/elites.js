@@ -20,7 +20,7 @@ function maybeElite(e) {
   makeElite(e, pick(Object.keys(ELITE_AFFIX)));
 }
 function makeElite(e, aff) {
-  e.elite = aff; e.hp *= 3; e.maxHp *= 3; e.dmgM *= 1.25; e.big = 1.2;
+  e.elite = aff; e.hp *= 3; e.maxHp *= 3; e.dmgM *= 1.25; e.big = 1.05; // algo más grandes, sin que la cabeza tape su nombre
   if (aff === 'rapido') e.spd *= 1.5;
   e.sumT = 3;
 }

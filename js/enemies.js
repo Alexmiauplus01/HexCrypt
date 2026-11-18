@@ -6,41 +6,41 @@ const PLAYER_R = 0.3; // radio con el que los enemigos se plantan delante del ju
 // ---------------------------------------------------------------- Datos
 // h = altura en el mundo (1 = altura de pared); el ancho sale de la proporción del sprite
 const ENEMY = {
-  skeleton: { name: 'Esqueleto', hp: 24, spd: 1.75, dmg: 8, r: 0.3, h: 0.8, z: 0, spr: 'skeleton', xp: 1 },
-  bat:      { name: 'Murciélago', hp: 9, spd: 3.5, dmg: 5, r: 0.22, h: 0.42, z: 0.32, spr: 'bat', xp: 1, fly: true },
-  slime:    { name: 'Slime', hp: 46, spd: 1.0, dmg: 12, r: 0.38, h: 0.5, z: 0, spr: 'slime', xp: 3 },
-  wraith:   { name: 'Espectro', hp: 22, spd: 1.5, dmg: 0, r: 0.3, h: 0.85, z: 0.06, spr: 'wraith', xp: 3, ranged: { cd: 2.6, dmg: 11, spd: 4.2, proj: 'orbGreen', keep: 5.5 } },
-  imp:      { name: 'Diablillo', hp: 34, spd: 2.2, dmg: 8, r: 0.3, h: 0.6, z: 0, spr: 'imp', xp: 4, ranged: { cd: 2.0, dmg: 12, spd: 6, proj: 'orbRed', keep: 3.5 } },
+  skeleton: { name: 'Esqueleto', hp: 24, spd: 1.75, dmg: 8, r: 0.3, h: 0.7, z: 0, spr: 'skeleton', xp: 1 },
+  bat:      { name: 'Murciélago', hp: 9, spd: 3.5, dmg: 5, r: 0.22, h: 0.34, z: 0.26, spr: 'bat', xp: 1, fly: true },
+  slime:    { name: 'Slime', hp: 46, spd: 1.0, dmg: 12, r: 0.38, h: 0.45, z: 0, spr: 'slime', xp: 3 },
+  wraith:   { name: 'Espectro', hp: 22, spd: 1.5, dmg: 0, r: 0.3, h: 0.64, z: 0.06, spr: 'wraith', xp: 3, ranged: { cd: 2.6, dmg: 11, spd: 4.2, proj: 'orbGreen', keep: 5.5 } },
+  imp:      { name: 'Diablillo', hp: 34, spd: 2.2, dmg: 8, r: 0.3, h: 0.55, z: 0, spr: 'imp', xp: 4, ranged: { cd: 2.0, dmg: 12, spd: 6, proj: 'orbRed', keep: 3.5 } },
   ghost:    { name: 'Fantasma', hp: 200, spd: 2.1, dmg: 12, r: 0.3, stop: 0.42, h: 0.68, z: 0.05, spr: 'ghost_melee', xp: 15, elite: true },
-  zombie:   { name: 'Necrófago', hp: 58, spd: 1.0, dmg: 14, r: 0.32, h: 0.8, z: 0, spr: 'zombie', xp: 3 },
-  cultist:  { name: 'Acólito', hp: 30, spd: 1.6, dmg: 0, r: 0.3, h: 0.82, z: 0, spr: 'cultist', xp: 4, ranged: { cd: 2.3, dmg: 12, spd: 6, proj: 'orbPurple', keep: 5 } },
-  spider:   { name: 'Araña', hp: 16, spd: 3.1, dmg: 7, r: 0.3, h: 0.52, z: 0, spr: 'spiderE', xp: 2 },
-  wolfE:    { name: 'Lobo hambriento', hp: 28, spd: 3.7, dmg: 9, r: 0.3, h: 0.55, z: 0, spr: 'wolfE', xp: 2, pack: [2, 3] },
-  bearE:    { name: 'Oso de las cavernas', hp: 140, spd: 1.5, dmg: 21, r: 0.5, h: 1.0, z: 0, spr: 'bearE', xp: 8, charge: { cd: 7, mul: 2.5, dur: 0.9, min: 2.5, max: 7 } },
-  shaman:   { name: 'Chamán', hp: 34, spd: 1.5, dmg: 0, r: 0.28, h: 0.66, z: 0, spr: 'shaman', xp: 5, ranged: { cd: 3, dmg: 7, spd: 5.5, proj: 'orbGreen', keep: 7.5 }, support: { cd: 4, r: 6.5, heal: 0.2, ward: 3 } },
+  zombie:   { name: 'Necrófago', hp: 58, spd: 1.0, dmg: 14, r: 0.32, h: 0.7, z: 0, spr: 'zombie', xp: 3 },
+  cultist:  { name: 'Acólito', hp: 30, spd: 1.6, dmg: 0, r: 0.3, h: 0.7, z: 0, spr: 'cultist', xp: 4, ranged: { cd: 2.3, dmg: 12, spd: 6, proj: 'orbPurple', keep: 5 } },
+  spider:   { name: 'Araña', hp: 16, spd: 3.1, dmg: 7, r: 0.3, h: 0.45, z: 0, spr: 'spiderE', xp: 2 },
+  wolfE:    { name: 'Lobo hambriento', hp: 28, spd: 3.7, dmg: 9, r: 0.3, h: 0.5, z: 0, spr: 'wolfE', xp: 2, pack: [2, 3] },
+  bearE:    { name: 'Oso de las cavernas', hp: 140, spd: 1.5, dmg: 21, r: 0.5, stop: 0.55, h: 0.8, z: 0, spr: 'bearE', xp: 8, charge: { cd: 7, mul: 2.5, dur: 0.9, min: 2.5, max: 7 } },
+  shaman:   { name: 'Chamán', hp: 34, spd: 1.5, dmg: 0, r: 0.28, h: 0.58, z: 0, spr: 'shaman', xp: 5, ranged: { cd: 3, dmg: 7, spd: 5.5, proj: 'orbGreen', keep: 7.5 }, support: { cd: 4, r: 6.5, heal: 0.2, ward: 3 } },
   // secretos: solo en El Prado Maldito
-  cowwarrior: { name: 'Vaca guerrera', hp: 70, spd: 2.5, dmg: 15, r: 0.34, h: 1.0, z: 0, spr: 'cowwarrior', xp: 6, pack: [2, 4] },
-  cowmage:  { name: 'Vaca maga', hp: 42, spd: 1.6, dmg: 0, r: 0.32, h: 0.95, z: 0, spr: 'cowmage', xp: 6, ranged: { cd: 2.4, dmg: 12, spd: 6, proj: 'orbGreen', keep: 6, spread: 3 } },
-  hound:    { name: 'Can infernal', hp: 34, spd: 3.5, dmg: 11, r: 0.32, h: 0.55, z: 0, spr: 'hound', xp: 3 },
-  eye:      { name: 'Ojo del vacío', hp: 40, spd: 1.2, dmg: 0, r: 0.3, h: 0.55, z: 0.35, spr: 'eye', xp: 4, fly: true, ranged: { cd: 1.9, dmg: 12, spd: 7, proj: 'orbPurple', keep: 6 } },
+  cowwarrior: { name: 'Vaca guerrera', hp: 70, spd: 2.5, dmg: 15, r: 0.34, stop: 0.4, h: 0.74, z: 0, spr: 'cowwarrior', xp: 6, pack: [2, 4] },
+  cowmage:  { name: 'Vaca maga', hp: 42, spd: 1.6, dmg: 0, r: 0.32, h: 0.72, z: 0, spr: 'cowmage', xp: 6, ranged: { cd: 2.4, dmg: 12, spd: 6, proj: 'orbGreen', keep: 6, spread: 3 } },
+  hound:    { name: 'Can infernal', hp: 34, spd: 3.5, dmg: 11, r: 0.32, h: 0.5, z: 0, spr: 'hound', xp: 3 },
+  eye:      { name: 'Ojo del vacío', hp: 40, spd: 1.2, dmg: 0, r: 0.3, h: 0.36, z: 0.28, spr: 'eye', xp: 4, fly: true, ranged: { cd: 1.9, dmg: 12, spd: 7, proj: 'orbPurple', keep: 6 } },
   // temáticas nuevas: Cuevas Heladas, Cloacas, Templo Hundido
-  yeti:        { name: 'Yeti', hp: 120, spd: 1.35, dmg: 19, r: 0.5, h: 1.55, z: 0, spr: 'yeti', xp: 7, charge: { cd: 6, mul: 2.8, dur: 1.0, min: 2.5, max: 8 } },
-  icewisp:     { name: 'Fuego fatuo helado', hp: 26, spd: 2.0, dmg: 0, r: 0.28, h: 0.62, z: 0.35, spr: 'icewisp', xp: 3, fly: true, ranged: { cd: 2.2, dmg: 9, spd: 6.5, proj: 'orbIce', keep: 5, chill: 2 } },
-  rat:         { name: 'Rata mutante', hp: 15, spd: 3.4, dmg: 5, r: 0.26, h: 0.42, z: 0, spr: 'rat', xp: 1, pack: [3, 4], bite: { poison: 3, dps: 2.5 } },
-  deepwarrior: { name: 'Guerrero abisal', hp: 72, spd: 1.9, dmg: 15, r: 0.32, h: 1.0, z: 0, spr: 'deepwarrior', xp: 5 },
-  deepmage:    { name: 'Hechicero abisal', hp: 40, spd: 1.5, dmg: 0, r: 0.3, h: 1.0, z: 0, spr: 'deepmage', xp: 5, ranged: { cd: 2.6, dmg: 10, spd: 6, proj: 'orbPurple', keep: 6, spread: 3 } },
+  yeti:        { name: 'Yeti', hp: 120, spd: 1.35, dmg: 19, r: 0.5, stop: 0.8, h: 0.88, z: 0, spr: 'yeti', xp: 7, charge: { cd: 6, mul: 2.8, dur: 1.0, min: 2.5, max: 8 } },
+  icewisp:     { name: 'Fuego fatuo helado', hp: 26, spd: 2.0, dmg: 0, r: 0.28, h: 0.36, z: 0.28, spr: 'icewisp', xp: 3, fly: true, ranged: { cd: 2.2, dmg: 9, spd: 6.5, proj: 'orbIce', keep: 5, chill: 2 } },
+  rat:         { name: 'Rata mutante', hp: 15, spd: 3.4, dmg: 5, r: 0.26, h: 0.38, z: 0, spr: 'rat', xp: 1, pack: [3, 4], bite: { poison: 3, dps: 2.5 } },
+  deepwarrior: { name: 'Guerrero abisal', hp: 72, spd: 1.9, dmg: 15, r: 0.32, h: 0.72, z: 0, spr: 'deepwarrior', xp: 5 },
+  deepmage:    { name: 'Hechicero abisal', hp: 40, spd: 1.5, dmg: 0, r: 0.3, h: 0.72, z: 0, spr: 'deepmage', xp: 5, ranged: { cd: 2.6, dmg: 10, spd: 6, proj: 'orbPurple', keep: 6, spread: 3 } },
   // vampiros, nigromantes, furias, espectros malignos, goblins, orcos y gusanos
-  vampspawn:   { name: 'Engendro vampírico', hp: 40, spd: 2.8, dmg: 9, r: 0.3, h: 0.8, z: 0, spr: 'vampspawn', xp: 4, drain: 1.2 },
-  vampire:     { name: 'Vampiro noble', hp: 95, spd: 2.0, dmg: 15, r: 0.3, h: 0.88, z: 0, spr: 'vampire', xp: 9, drain: 1, blink: { cd: 5 } },
-  vampbat:     { name: 'Murciélago vampiro', hp: 12, spd: 3.6, dmg: 5, r: 0.22, h: 0.42, z: 0.32, spr: 'vampbat', xp: 2, fly: true, drain: 2, pack: [2, 3] },
-  necromancer: { name: 'Nigromante', hp: 55, spd: 1.3, dmg: 0, r: 0.3, h: 0.85, z: 0, spr: 'necromancer', xp: 7, ranged: { cd: 2.6, dmg: 11, spd: 5.5, proj: 'orbGreen', keep: 6 }, summon: { cd: 9, type: 'skeleton', n: 2, max: 4 } },
-  fury:        { name: 'Furia', hp: 45, spd: 3.0, dmg: 12, r: 0.3, h: 0.85, z: 0.25, spr: 'fury', xp: 6, fly: true, charge: { cd: 4, mul: 2.2, dur: 0.8, min: 2, max: 7 } },
-  malevolent:  { name: 'Espectro maligno', hp: 40, spd: 1.6, dmg: 0, r: 0.3, h: 0.85, z: 0.06, spr: 'malevolent', xp: 6, ranged: { cd: 2.2, dmg: 13, spd: 5, proj: 'orbRed', keep: 5 }, phase: { on: 1.6, off: 3 } },
-  goblin:      { name: 'Goblin', hp: 18, spd: 3.0, dmg: 6, r: 0.26, h: 0.55, z: 0, spr: 'goblin', xp: 1, pack: [3, 4] },
-  goblinarcher:{ name: 'Goblin arquero', hp: 16, spd: 2.4, dmg: 0, r: 0.26, h: 0.55, z: 0, spr: 'goblinarcher', xp: 2, ranged: { cd: 2.0, dmg: 8, spd: 9, proj: 'orbArrow', keep: 6 } },
-  harpy:       { name: 'Arpía', hp: 34, spd: 3.1, dmg: 10, r: 0.3, h: 0.85, z: 0.3, spr: 'harpy', xp: 5, fly: true, charge: { cd: 3.5, mul: 2.4, dur: 0.7, min: 2, max: 8 }, hitrun: 1.6 },
-  orc:         { name: 'Orco', hp: 95, spd: 1.6, dmg: 17, r: 0.38, h: 1.0, z: 0, spr: 'orc', xp: 7 },
-  worm:        { name: 'Gusano gigante', hp: 260, spd: 0, dmg: 14, r: 0.5, h: 1.0, z: 0, spr: 'worm', xp: 15, block: true, worm: { cd: 3.2, open: 1.9, dps: 4 } },
+  vampspawn:   { name: 'Engendro vampírico', hp: 40, spd: 2.8, dmg: 9, r: 0.3, h: 0.7, z: 0, spr: 'vampspawn', xp: 4, drain: 1.2 },
+  vampire:     { name: 'Vampiro noble', hp: 95, spd: 2.0, dmg: 15, r: 0.3, h: 0.72, z: 0, spr: 'vampire', xp: 9, drain: 1, blink: { cd: 5 } },
+  vampbat:     { name: 'Murciélago vampiro', hp: 12, spd: 3.6, dmg: 5, r: 0.22, h: 0.34, z: 0.26, spr: 'vampbat', xp: 2, fly: true, drain: 2, pack: [2, 3] },
+  necromancer: { name: 'Nigromante', hp: 55, spd: 1.3, dmg: 0, r: 0.3, h: 0.72, z: 0, spr: 'necromancer', xp: 7, ranged: { cd: 2.6, dmg: 11, spd: 5.5, proj: 'orbGreen', keep: 6 }, summon: { cd: 9, type: 'skeleton', n: 2, max: 4 } },
+  fury:        { name: 'Furia', hp: 45, spd: 3.0, dmg: 12, r: 0.3, h: 0.45, z: 0.18, spr: 'fury', xp: 6, fly: true, charge: { cd: 4, mul: 2.2, dur: 0.8, min: 2, max: 7 } },
+  malevolent:  { name: 'Espectro maligno', hp: 40, spd: 1.6, dmg: 0, r: 0.3, h: 0.64, z: 0.06, spr: 'malevolent', xp: 6, ranged: { cd: 2.2, dmg: 13, spd: 5, proj: 'orbRed', keep: 5 }, phase: { on: 1.6, off: 3 } },
+  goblin:      { name: 'Goblin', hp: 18, spd: 3.0, dmg: 6, r: 0.26, h: 0.5, z: 0, spr: 'goblin', xp: 1, pack: [3, 4] },
+  goblinarcher:{ name: 'Goblin arquero', hp: 16, spd: 2.4, dmg: 0, r: 0.26, h: 0.5, z: 0, spr: 'goblinarcher', xp: 2, ranged: { cd: 2.0, dmg: 8, spd: 9, proj: 'orbArrow', keep: 6 } },
+  harpy:       { name: 'Arpía', hp: 34, spd: 3.1, dmg: 10, r: 0.3, h: 0.45, z: 0.18, spr: 'harpy', xp: 5, fly: true, charge: { cd: 3.5, mul: 2.4, dur: 0.7, min: 2, max: 8 }, hitrun: 1.6 },
+  orc:         { name: 'Orco', hp: 95, spd: 1.6, dmg: 17, r: 0.38, stop: 0.5, h: 0.78, z: 0, spr: 'orc', xp: 7 },
+  worm:        { name: 'Gusano gigante', hp: 260, spd: 0, dmg: 14, r: 0.5, stop: 0.5, h: 0.8, z: 0, spr: 'worm', xp: 15, block: true, worm: { cd: 3.2, open: 1.9, dps: 4 } },
   lich:     { name: 'EL LICHE', hp: 470, spd: 1.3, dmg: 18, r: 0.5, h: 1.75, z: 0, spr: 'lich', xp: 60, boss: true, ai: 'lich' },
   queen:    { name: 'LA REINA ARAÑA', hp: 560, spd: 1.9, dmg: 20, r: 0.6, h: 1.3, z: 0, spr: 'queen', xp: 60, boss: true, ai: 'queen' },
   voidlord: { name: 'EL OJO PRIMIGENIO', hp: 500, spd: 1.0, dmg: 16, r: 0.6, h: 1.6, z: 0.2, spr: 'voidlord', xp: 60, boss: true, ai: 'eye' },
@@ -410,7 +410,8 @@ function updateEnemies(dt) {
       const nax = ax - ay * w, nay = ay + ax * w; ax = nax; ay = nay;
     }
     // los de cuerpo a cuerpo se plantan delante del jugador en vez de meterse en él
-    const stop = (d.stop || d.r) + PLAYER_R; // stop: se plantan más lejos sin ocupar más (minotauro, fantasmas)
+    const reach = (d.stop || d.r) * (e.big || 1) + (e.elite ? 0.1 : 0); // stop: se plantan más lejos sin ocupar más (grandes y élites)
+    const stop = reach + PLAYER_R;
     if (!ally && !e.fleeT && dist < stop + 0.08 && ax * dx + ay * dy > 0) spd = 0;
     const ox = e.x, oy = e.y;
     lv.move(e, ax * spd * dt + e.kx * dt, ay * spd * dt + e.ky * dt, Math.min(d.r, 0.3));
@@ -424,7 +425,7 @@ function updateEnemies(dt) {
       if (ally && ad < d.r + ally.def.r + 0.45) {
         ally.hp -= d.dmg * e.dmgM; ally.flash = 0.1; e.atk = 0.9;
         if (ally.hp <= 0) allyKill(ally);
-      } else if (dist < (d.stop || d.r) + 0.5 && !hidden) {
+      } else if (dist < (d.stop || d.r) * (e.big || 1) + (e.elite ? 0.1 : 0) + 0.5 && !hidden) {
         const hp0 = p.hp;
         hurtPlayer(Math.round(d.dmg * e.dmgM * (e.crit && Math.random() < e.crit ? 2 : 1)), e.x, e.y); e.atk = d.atkCd || (d.boss ? 1.1 : 0.9);
         if (d.bite && p.hp < hp0) { p.poisT = Math.max(p.poisT || 0, d.bite.poison); p.poisDps = d.bite.dps * e.dmgM; }
