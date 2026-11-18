@@ -525,7 +525,7 @@ function loadAssets() {
       const s = SPR['enemy_' + id], d = ENEMY[id];
       if (!s || d.boss || id === 'ghost') continue;
       const t = trimSprite(s); // sin márgenes vacíos: la altura h del enemigo es la del dibujo
-      SPR[d.spr] = id === 'worm' && SPR.enemy_worm_open ? [t, trimSprite(SPR.enemy_worm_open)] : [t, bobSprite(t, -1)];
+      SPR[d.spr] = id === 'worm' && SPR.enemy_worm_open ? trimPair(s, SPR.enemy_worm_open) : [t, bobSprite(t, -1)]; // el gusano: cerrado y abierto con el mismo marco
     }
     // murciélago vampiro y espectro maligno: si no tienen sprite propio, se tiñen a partir del nuevo
     if (SPR.enemy_bat && !SPR.enemy_vampbat) SPR.vampbat = SPR.bat.map(s => tintSprite(s, [1.5, 0.45, 0.5], false));
@@ -1103,6 +1103,14 @@ function trimSprite(spr, pad = 1) {
   const w = x1 - x0 + 1, h = y1 - y0 + 1, px = new Uint32Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px[y * w + x] = spr.px[(y + y0) * spr.w + x + x0];
   return { w, h, px, flash: px };
+}
+// recorta dos fotogramas del mismo tamaño con el mismo marco (el que abarca a los dos), para que no cambien de escala
+function trimPair(a, b) {
+  let x0 = a.w, y0 = a.h, x1 = -1, y1 = -1;
+  for (const s of [a, b]) for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) if (s.px[y * s.w + x] >>> 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0 || a.w !== b.w || a.h !== b.h) return [trimSprite(a), trimSprite(b)];
+  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  return [a, b].map(s => { const px = new Uint32Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px[y * w + x] = s.px[(y + y0) * s.w + x + x0]; return { w, h, px, flash: px }; });
 }
 function bobSprite(spr, dy) {
   const w = spr.w, h = spr.h, px = new Uint32Array(w * h);
