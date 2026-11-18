@@ -119,14 +119,15 @@ function fireProj(o) {
     y: o.y !== undefined ? o.y : p.y + Math.sin(p.a) * 0.35 + Math.cos(p.a) * 0.12,
     vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, r: o.r || 0.17, life: o.life || 1.6, friendly: true,
     dmg: o.dmg, crit: !!o.crit, pierce: o.pierce || 0, hit: new Set(), spr: o.spr, size: o.size || 0.32,
-    fx: o.fx || null, explode: o.explode || null, basic: !!o.basic,
+    fx: o.fx || null, explode: o.explode || null, basic: !!o.basic, flame: !!o.flame, grow: o.grow || 0,
   });
 }
 
 function explodeAt(x, y, ex) {
   aoe(x, y, ex.r, ex.dmg, Object.assign({ kb: 6 }, ex.fx));
-  vfxExplosion(x, y, ex.r);
-  G.shake = Math.max(G.shake, 0.3); Sfx.play('nova');
+  vfxExplosion(x, y, ex.r, !!ex.big);
+  if (ex.big) vfxDustWave(x, y, ex.r, { ramp: 'fire', debris: 10 }); // el polvo se aparta hasta el borde de la explosión
+  G.shake = Math.max(G.shake, ex.big ? 0.55 : 0.3); Sfx.play('nova');
 }
 
 // Efectos al impactar de proyectiles (fuego, hielo, rayo en cadena, veneno, drenaje...)
@@ -383,7 +384,7 @@ const SKILLS = {
   } },
   // ----- Mago / Hechicero / Archimago
   fireball: { name: 'Bola de fuego', cd: 6, use(p) {
-    fireProj({ spr: 'orbRed', size: 0.75, spd: 9, dmg: 20 * p.dmgMul, r: 0.3, life: 2.2, explode: { r: 2.5, dmg: 45 * p.dmgMul, fx: { burn: 3 }, col: [255, 120, 40] } });
+    fireProj({ spr: 'orbRed', size: 0.4, grow: 1.1, spd: 9, dmg: 20 * p.dmgMul, r: 0.4, life: 2.2, flame: true, explode: { r: 3.1, dmg: 45 * p.dmgMul, fx: { burn: 3 }, col: [255, 120, 40], big: true } });
     p.anim = 1; Sfx.play('nova');
   } },
   frostnova: { name: 'Nova de escarcha', cd: 9, use(p) {

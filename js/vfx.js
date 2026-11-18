@@ -114,11 +114,12 @@ function vfxExplosion(x, y, r = 2.4, big = false) {
   const F = VR.fire;
   vlight(x, y, [2.4, 2.3, 2.1], r * 2.2, 0.1);
   vlight(x, y, [1.7, 1.0, 0.45], r * 2.8, 0.7);
-  vp({ x, y, z: 0.45, life: 0.08, ramp: [hexc('#ffffff')], s0: r * 0.4, s1: r * 0.8, shape: 'disc', maxPx: 60 });
-  for (let i = 0; i < 6; i++) vp({ x: x + rand(-0.2, 0.2), y: y + rand(-0.2, 0.2), z: rand(0.25, 0.6), life: 0.3, ramp: F, s0: 0.5 * (big ? 1.4 : 1), s1: 0.25, shape: 'disc', maxPx: 34, curve: 0.62 });
-  for (let i = 0; i < (big ? 30 : 18); i++) {
-    const a = rand(0, TAU), s = rand(1.2, 3.4) * r / 2.4;
-    vp({ x, y, z: rand(0.2, 0.5), vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(0.4, 1.6), grav: -0.4, drag: 2.2, life: rand(0.55, 1.1), ramp: F, s0: rand(0.22, 0.38), s1: 0.1, shape: 'disc', maxPx: 22, curve: 0.62, delay: rand(0, 0.12) });
+  vp({ x, y, z: 0.45, life: big ? 0.12 : 0.08, ramp: [hexc('#ffffff')], s0: r * 0.4, s1: r * 0.8, shape: 'disc', maxPx: big ? 80 : 60 });
+  for (let i = 0; i < (big ? 10 : 6); i++) vp({ x: x + rand(-0.2, 0.2) * (big ? 2 : 1), y: y + rand(-0.2, 0.2) * (big ? 2 : 1), z: rand(0.25, 0.6), life: big ? 0.42 : 0.3, ramp: F, s0: 0.5 * (big ? 1.8 : 1), s1: 0.25, shape: 'disc', maxPx: big ? 60 : 34, curve: 0.62 });
+  if (big) for (let i = 0; i < 10; i++) vp({ x: x + rand(-0.3, 0.3), y: y + rand(-0.3, 0.3), z: 0.3, vz: rand(0.8, 1.8), drag: 1.6, life: rand(0.5, 0.9), ramp: F, s0: rand(0.45, 0.65), s1: 0.15, shape: 'disc', maxPx: 48, curve: 0.62, delay: rand(0.02, 0.15) }); // columna de fuego que sube
+  for (let i = 0; i < (big ? 46 : 18); i++) {
+    const a = rand(0, TAU), s = rand(1.2, 3.4) * r / 2.4 * (big ? 1.5 : 1);
+    vp({ x, y, z: rand(0.2, 0.5), vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(0.4, 1.6), grav: -0.4, drag: 2.2, life: rand(0.55, 1.1), ramp: F, s0: rand(0.22, 0.38) * (big ? 1.7 : 1), s1: 0.1, shape: 'disc', maxPx: big ? 44 : 22, curve: 0.62, delay: rand(0, 0.12) });
   }
   for (let i = 0; i < (big ? 40 : 26); i++) {
     const a = rand(0, TAU), s = rand(4, 9);
@@ -147,6 +148,13 @@ function vfxImpact(x, y, z, rampName = 'impact', scale = 1) {
 function vfxTrail(pr) {
   const R = VR[PROJ_RAMP[pr.spr] || 'cyan'];
   vp({ x: pr.x + rand(-0.05, 0.05), y: pr.y + rand(-0.05, 0.05), z: 0.46 + rand(-0.04, 0.04), vx: -pr.vx * 0.05, vy: -pr.vy * 0.05, vz: rand(-0.1, 0.2), life: rand(0.18, 0.32), ramp: R.slice(1, 6), s0: pr.size * 0.25, s1: 0.02, maxPx: 3 });
+  if (pr.flame) { // bola de fuego grande: lenguas de fuego, humo y brasas detrás
+    const k = pr.size * 0.3;
+    for (let i = 0; i < 2; i++) vp({ x: pr.x + rand(-k, k), y: pr.y + rand(-k, k), z: 0.36 + rand(-k, k) * 0.6, vx: -pr.vx * 0.12, vy: -pr.vy * 0.12, vz: rand(0.2, 0.7), life: rand(0.25, 0.45), ramp: VR.fire.slice(1, 8), s0: pr.size * 0.32, s1: 0.04, shape: 'disc', maxPx: 26, curve: 0.7 });
+    if (Math.random() < 0.5) vp({ x: pr.x, y: pr.y, z: 0.5, vx: -pr.vx * 0.05, vy: -pr.vy * 0.05, vz: 0.4, drag: 1, life: rand(0.6, 1), ramp: VR.smoke, s0: 0.15, s1: 0.4, shape: 'disc', maxPx: 22, add: false, alpha: 0.45, fade: true });
+    if (Math.random() < 0.6) vp({ x: pr.x, y: pr.y, z: 0.4, vx: rand(-1, 1), vy: rand(-1, 1), vz: rand(-0.5, 1), grav: 2, life: rand(0.4, 0.8), ramp: VR.fire.slice(1, 6), s0: 0.035, maxPx: 2 });
+    vlight(pr.x, pr.y, [1.4, 0.7, 0.25], 3.2, 0.06);
+  }
 }
 
 // Arco eléctrico entre dos puntos + chispas de plasma en el destino

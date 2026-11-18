@@ -631,6 +631,7 @@ function updateProjs(dt) {
   const lv = G.lv, p = G.p;
   for (const pr of G.projs) {
     if (Math.random() < 0.8) vfxTrail(pr);
+    if (pr.grow && pr.size < pr.grow) pr.size = Math.min(pr.grow, pr.size + dt * 2.6); // la bola de fuego crece al salir de la mano
     const steps = Math.max(1, Math.ceil(Math.hypot(pr.vx, pr.vy) * dt / 0.25));
     const sdt = dt / steps;
     for (let s = 0; s < steps && !pr.dead; s++) {
