@@ -280,6 +280,56 @@ function vfxShock(x, y, r) {
   for (let i = 0; i < 10; i++) { const a = rand(0, TAU), d = rand(0.3, r * 0.8); vp({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, z: 0.1, vx: Math.cos(a) * 1.5, vy: Math.sin(a) * 1.5, vz: 0.4, drag: 1.5, life: rand(0.8, 1.5), ramp: VR.smoke, s0: 0.3, s1: 0.6, shape: 'disc', maxPx: 24, add: false, alpha: 0.5, fade: true }); }
 }
 
+// Onda de polvo: al golpear el suelo, el polvo se aparta en círculo (o en abanico) y se frena justo en el
+// borde del área de la habilidad (r), dejando ver el alcance real. o: ramp (destello del frente),
+// cone {a, arc}, n (densidad), debris (piedrecillas), life
+VR.dust = rampOf(['#d8c8ac', '#bcab92', '#a0907c', '#837566', '#655a50']);
+function vfxDustWave(x, y, r, o = {}) {
+  const cone = o.cone, life = o.life || 0.8, drag = 4, r0 = 0.3;
+  const n = o.n || Math.round((cone ? 12 + r * 10 * cone.arc / TAU * 2 : 24 + r * 14));
+  const vk = drag / (1 - Math.exp(-drag * life)); // con este frenado la partícula recorre (d - r0) en su vida
+  const dirAt = (i) => cone ? cone.a + ((i + rand(0, 1)) / n - 0.5) * cone.arc : (i + rand(-0.2, 0.2)) / n * TAU;
+  for (let i = 0; i < n; i++) { // nube de polvo pegada al suelo que se abre y se posa en el borde
+    const a = dirAt(i), d = r * rand(0.9, 1.03), s = (d - r0) * vk, l = life * rand(0.95, 1.2);
+    vp({ x: x + Math.cos(a) * r0, y: y + Math.sin(a) * r0, z: rand(0.02, 0.06), vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(0.4, 0.9), drag, life: l, ramp: VR.dust, s0: 0.14, s1: rand(0.38, 0.55), shape: 'disc', maxPx: 44, add: false, alpha: 0.85, fade: true, curve: 1.4 });
+    if (i % 2) vp({ x: x + Math.cos(a) * r0, y: y + Math.sin(a) * r0, z: 0.02, vx: Math.cos(a) * s * 0.75, vy: Math.sin(a) * s * 0.75, vz: rand(0.1, 0.3), drag, life: l * 1.1, ramp: VR.dust, s0: 0.12, s1: 0.4, shape: 'disc', maxPx: 40, add: false, alpha: 0.6, fade: true, curve: 1.4 }); // segunda capa por detrás del frente
+  }
+  for (let i = 0; i < n; i++) { // frente fino de tierra que marca el radio exacto
+    const a = dirAt(i), s = (r - r0) * vk;
+    vp({ x: x + Math.cos(a) * r0, y: y + Math.sin(a) * r0, z: 0.03, vx: Math.cos(a) * s, vy: Math.sin(a) * s, drag, life, ramp: VR.dust.slice(0, 3), s0: 0.06, maxPx: 4, add: false });
+  }
+  if (o.ramp && VR[o.ramp]) { // destello del golpe que corre por delante del polvo
+    const R = VR[o.ramp].slice(1, 5), m = Math.round(n * 0.7);
+    for (let i = 0; i < m; i++) { const a = cone ? cone.a + (i / m - 0.5) * cone.arc : i / m * TAU, s = r / 0.28; vp({ x, y, z: 0.05, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.28, ramp: R, s0: 0.07, maxPx: 3 }); }
+  }
+  for (let i = 0; i < (o.debris !== undefined ? o.debris : 8 + r * 2); i++) { // piedrecillas que saltan
+    const a = dirAt(randi(0, n - 1)), s = rand(1, 3) * Math.min(1.5, r / 2);
+    vp({ x, y, z: 0.08, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vz: rand(1.6, 3.4), grav: 9, life: rand(0.7, 1.2), ramp: VR.earth, s0: 0.05, maxPx: 3, add: false });
+  }
+  for (let i = 0; i < 5; i++) { // polvo levantado que queda flotando en el centro
+    const a = cone ? cone.a + rand(-0.4, 0.4) * cone.arc : rand(0, TAU), d = rand(0.3, r * 0.4);
+    vp({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, z: 0.08, vz: rand(0.15, 0.35), drag: 1.2, life: rand(1, 1.5), ramp: VR.dust.slice(1), s0: 0.25, s1: 0.55, shape: 'disc', maxPx: 26, add: false, alpha: 0.35, fade: true, delay: rand(0, 0.12) });
+  }
+  vlight(x, y, [0.6, 0.5, 0.38], Math.max(2, r * 1.3), 0.25);
+}
+// Remolino de polvo alrededor del jugador (torbellino y similares)
+function vfxDustSwirl(x, y, r, dir = 1) {
+  for (let i = 0; i < 22; i++) {
+    const a = rand(0, TAU), d = rand(0.8, r), s = rand(3, 5.5) * dir;
+    vp({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, z: rand(0.04, 0.2), vx: -Math.sin(a) * s + Math.cos(a) * 0.8, vy: Math.cos(a) * s + Math.sin(a) * 0.8, vz: rand(0.4, 1), drag: 3, life: rand(0.5, 0.75), ramp: VR.dust, s0: 0.12, s1: 0.42, shape: 'disc', maxPx: 36, add: false, alpha: 0.75, fade: true });
+  }
+}
+// Tajo: arco de filo que barre el abanico del golpe a media altura
+function vfxSlashArc(x, y, a, arc, r, rampName = 'steel', dir = 1) {
+  const R = VR[rampName] || VR.steel, n = Math.round(16 + arc * r * 9);
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), ang = a + (t - 0.5) * arc * dir;
+    for (const [d, s0, off] of [[r * 0.9, 0.08, 0], [r * 0.65, 0.06, 1], [r * 0.4, 0.05, 2]]) {
+      vp({ x: x + Math.cos(ang) * d, y: y + Math.sin(ang) * d, z: 0.42 + (0.5 - t) * 0.4 + off * 0.03, vx: -Math.sin(ang) * 2 * dir, vy: Math.cos(ang) * 2 * dir, vz: -0.6, life: 0.24, ramp: R, off, s0: s0 * 1.4, s1: 0.02, maxPx: 5, delay: t * 0.08 });
+    }
+  }
+}
+
 // ---------------------------------------------------------------- Efectos de pantalla (primera persona)
 // Curación: cruces verdes que suben desde abajo
 function vfxHeal(n = 10, rampName = 'heal') {

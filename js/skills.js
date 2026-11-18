@@ -352,19 +352,19 @@ const SKILLS = {
   smoke: { name: 'Bomba de humo', cd: 12, use(p) { p.stealth = 3.5; smokeFx(p.x, p.y); Sfx.play('dash'); } },
   // ----- Luchador / Guerrero / Campeón
   warcry: { name: 'Grito de guerra', cd: 14, use(p) {
-    aoe(p.x, p.y, 3.4, 14 * p.dmgMul, { kb: 9 }); vRing(p.x, p.y, 0.03, 3.4, 0.35, VR.gold.slice(0, 5), 44, { s0: 0.08 });
+    aoe(p.x, p.y, 3.4, 14 * p.dmgMul, { kb: 9 }); vRing(p.x, p.y, 0.03, 3.4 * skMul('area'), 0.35, VR.gold.slice(0, 5), 44, { s0: 0.08 }); vfxDustWave(p.x, p.y, 3.4 * skMul('area'), { debris: 4 });
     addBuff('warcry', 'Grito', 8, { dmg: 1.25 }, C.orange); Sfx.play('roar'); G.shake = Math.max(G.shake, 0.35);
   } },
   shieldbash: { name: 'Golpe de escudo', cd: 8, use(p) {
     if (offhandOf(p) !== 'shield') { toast('NECESITAS UN ESCUDO EN LA MANO', false); return false; }
     const n = aoe(p.x, p.y, 2.5, 26 * p.dmgMul, { kb: 11, stun: 1.3, cone: { a: p.a, arc: 1.8 } });
-    vfxImpact(p.x + Math.cos(p.a) * 1.2, p.y + Math.sin(p.a) * 1.2, 0.45, 'impact', 1.4);
+    vfxImpact(p.x + Math.cos(p.a) * 1.2, p.y + Math.sin(p.a) * 1.2, 0.45, 'impact', 1.4); vfxDustWave(p.x, p.y, 2.5 * skMul('area'), { cone: { a: p.a, arc: 1.8 }, ramp: 'gold' });
     p.bash = { t: 0, dur: 0.42, hit: n > 0 }; G.shake = Math.max(G.shake, n ? 0.3 : 0.1); Sfx.play('hit'); // el escudo sale hacia delante y vuelve
     burst(p.x + Math.cos(p.a) * 1.2, p.y + Math.sin(p.a) * 1.2, 0.4, 10, rgb(255, 235, 170), 3, 0.4);
   } },
   whirlwind: { name: 'Torbellino', cd: 9, use(p) {
     p.swing = { t: 0, dur: 0.85, dir: 1, spin: true };
-    for (let k = 0; k < 5; k++) later(k * 0.17, () => { aoe(G.p.x, G.p.y, 2.4, 20 * G.p.dmgMul, { kb: 5 }); vRing(G.p.x, G.p.y, 0.4, 2.3, 0.2, VR.steel.slice(0, 4), 30); Sfx.play('swing'); });
+    for (let k = 0; k < 5; k++) later(k * 0.17, () => { aoe(G.p.x, G.p.y, 2.4, 20 * G.p.dmgMul, { kb: 5 }); vRing(G.p.x, G.p.y, 0.4, 2.3 * skMul('area'), 0.2, VR.steel.slice(0, 4), 30); vfxDustSwirl(G.p.x, G.p.y, 2.4 * skMul('area')); if (k === 4) vfxDustWave(G.p.x, G.p.y, 2.4 * skMul('area'), { debris: 0 }); Sfx.play('swing'); });
     G.shake = Math.max(G.shake, 0.3);
   } },
   rally: { name: 'Estandarte', cd: 18, use(p) {
@@ -379,7 +379,7 @@ const SKILLS = {
     const t = aimPos(4.5); p.dashT = 0;
     if (!leapTo(t.x, t.y)) { p.x = t.x - Math.cos(p.a) * 0.4; p.y = t.y - Math.sin(p.a) * 0.4; }
     p.inv = Math.max(p.inv, 0.3);
-    later(0.12, () => { const q = G.p; aoe(q.x, q.y, 3.3, 70 * q.dmgMul, { kb: 12, stun: 1.2 }); vfxShock(q.x, q.y, 3.3); G.shake = 0.7; Sfx.play('boss'); });
+    later(0.12, () => { const q = G.p; aoe(q.x, q.y, 3.3, 70 * q.dmgMul, { kb: 12, stun: 1.2 }); vfxShock(q.x, q.y, 3.3 * skMul('area')); vfxDustWave(q.x, q.y, 3.3 * skMul('area'), { ramp: 'impact', debris: 16 }); G.shake = 0.7; Sfx.play('boss'); });
   } },
   // ----- Mago / Hechicero / Archimago
   fireball: { name: 'Bola de fuego', cd: 6, use(p) {
@@ -556,7 +556,13 @@ function dashStrike(dist, dmg, o = {}) {
     const x = lerp(x0, p.x, k / 6), y = lerp(y0, p.y, k / 6);
     for (const e of enemiesIn(x, y, o.r || 1.2)) if (!hit.has(e)) { hit.add(e); damageEnemy(e, dmg, { kx: Math.cos(p.a) * (o.kb || 6), ky: Math.sin(p.a) * (o.kb || 6) }); applyFx(e, o.fx); }
     burst(x, y, 0.4, 3, o.col || rgb(230, 230, 255), 1.6, 0.4);
+    if (k < 6) { // estela de polvo que levantan los pies, apartándose hacia los lados
+      const sd = (k % 2 ? 1 : -1), px = -Math.sin(p.a) * sd, py = Math.cos(p.a) * sd;
+      vp({ x, y, z: 0.04, vx: px * rand(0.8, 1.6) - Math.cos(p.a) * 0.6, vy: py * rand(0.8, 1.6) - Math.sin(p.a) * 0.6, vz: 0.2, drag: 2.5, life: rand(0.6, 0.9), ramp: VR.dust, s0: 0.12, s1: 0.32, shape: 'disc', maxPx: 22, add: false, alpha: 0.5, fade: true, delay: k * 0.02 });
+    }
   }
+  // al aterrizar: onda de polvo que se abre hasta el radio de golpe de la habilidad
+  vfxDustWave(p.x, p.y, ((o.r || 1.2) + 0.3) * skMul('area'), { ramp: o.wave || 'impact', n: o.r && o.r < 1.2 ? 24 : undefined });
   Sfx.play('dash'); G.shake = Math.max(G.shake, 0.2);
   return hit.size;
 }
@@ -589,7 +595,7 @@ Object.assign(SKILLS, {
   consecrate: { name: 'Consagrar', cd: 12, use(p) { zoneAt(p.x, p.y, 3, 6, 12 * p.dmgMul, { slow: 0.5 }, 'holy', rgb(255, 230, 140)); Sfx.play('nova'); } },
   hammer: { name: 'Martillo de luz', cd: 7, use(p) { fireProj({ spr: 'orbGold', size: 0.7, spd: 12, dmg: 55 * p.dmgMul, pierce: 1, life: 1.6, r: 0.35, fx: { stun: 1 } }); p.anim = 1; Sfx.play('shoot'); } },
   // ----- Guerrero
-  cleave: { name: 'Tajo brutal', cd: 6, use(p) { aoe(p.x, p.y, 2.8, 60 * p.dmgMul, { kb: 8, cone: { a: p.a, arc: 3.4 } }); p.swing = { t: 0, dur: 0.45, dir: 1, move: 'slash', strong: true }; G.shake = Math.max(G.shake, 0.3); Sfx.play('hit'); } },
+  cleave: { name: 'Tajo brutal', cd: 6, use(p) { aoe(p.x, p.y, 2.8, 60 * p.dmgMul, { kb: 8, cone: { a: p.a, arc: 3.4 } }); vfxSlashArc(p.x, p.y, p.a, 3.4, 2.8 * skMul('area'), 'steel'); vfxDustWave(p.x, p.y, 2.8 * skMul('area'), { cone: { a: p.a, arc: 3.4 }, debris: 4 }); p.swing = { t: 0, dur: 0.45, dir: 1, move: 'slash', strong: true }; G.shake = Math.max(G.shake, 0.3); Sfx.play('hit'); } },
   bloodlust: { name: 'Sed de batalla', cd: 18, use(p) { addBuff('bloodlust', 'Sed de batalla', 8, { dmg: 1.3, leech: 0.1 }, C.red); ringFx(p.x, p.y, 2, rgb(220, 40, 40), 28); Sfx.play('roar'); } },
   // ----- Druida
   entangle: { name: 'Raíces', cd: 10, use(p) { const n = aoe(p.x, p.y, 4, 14 * p.dmgMul, { stun: 2.5, poison: 3 }); vRing(p.x, p.y, 0.03, 4, 0.4, VR.poison.slice(1, 5), 40); Sfx.play('summon'); if (!n) return; } },
@@ -602,12 +608,12 @@ Object.assign(SKILLS, {
   eclipse: { name: 'Eclipse', cd: 22, use(p) { for (const e of enemiesNear(8)) applyFx(e, { stun: 2.2, slow: 4 }); p.stealth = Math.max(p.stealth, 4); vfxBlackHole(p.x, p.y, 4); G.flashFx = 0.3; Sfx.play('nova'); } },
   soulreap: { name: 'Siega de almas', cd: 14, use(p) { let n = 0; for (const e of enemiesNear(5)) { damageEnemy(e, e.maxHp * (e.def.boss ? 0.04 : 0.15) + 20 * p.dmgMul, { silent: n++ > 0 }); if (e.dead) healP(p.maxHp * 0.05); } vRing(p.x, p.y, 0.4, 5, 0.4, VR.void.slice(0, 5), 44); Sfx.play('nova'); if (!n) return; } },
   // ----- Duelista
-  lunge: { name: 'Estocada fulgurante', cd: 5, use(p) { dashStrike(5, 80 * p.dmgMul, { kb: 4, r: 1 }); } },
+  lunge: { name: 'Estocada fulgurante', cd: 5, use(p) { dashStrike(5, 80 * p.dmgMul, { kb: 4, r: 1, wave: 'steel' }); } },
   bladedance: { name: 'Danza de acero', cd: 16, use(p) { addBuff('dance', 'Danza de acero', 6, { rate: 1.5, spd: 1.2 }, C.cyan); p.inv = Math.max(p.inv, 0.6); ringFx(p.x, p.y, 1.6, rgb(200, 230, 255), 26); Sfx.play('blade'); } },
   execute: { name: 'Golpe de gracia', cd: 12, use(p) { const t = nearestEnemy(2.6, true); if (!t) return false; if (!t.def.boss && t.hp < t.maxHp * 0.35) damageEnemy(t, t.hp + 1, { crit: true }); else damageEnemy(t, 120 * p.dmgMul, { crit: true }); vfxImpact(t.x, t.y, 0.6, 'impact', 1.5); G.shake = Math.max(G.shake, 0.3); Sfx.play('hit'); } },
   // ----- Domador
   packrage: { name: 'Furia de la manada', cd: 18, use(p) { if (!G.allies.length) return false; for (const a of G.allies) { a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.4); a.rageT = 10; } ringFx(p.x, p.y, 3, rgb(255, 160, 80), 30); Sfx.play('roar'); } },
-  beastroar: { name: 'Rugido bestial', cd: 12, use(p) { aoe(p.x, p.y, 4, 20 * p.dmgMul, { stun: 1.5, kb: 6 }); for (const a of G.allies) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.3); vRing(p.x, p.y, 0.4, 4, 0.4, VR.fire.slice(2, 6), 40); Sfx.play('roar'); } },
+  beastroar: { name: 'Rugido bestial', cd: 12, use(p) { aoe(p.x, p.y, 4, 20 * p.dmgMul, { stun: 1.5, kb: 6 }); for (const a of G.allies) a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.3); vRing(p.x, p.y, 0.4, 4 * skMul('area'), 0.4, VR.fire.slice(2, 6), 40); vfxDustWave(p.x, p.y, 4 * skMul('area'), { debris: 4 }); G.shake = Math.max(G.shake, 0.3); Sfx.play('roar'); } },
   netshot: { name: 'Red', cd: 9, use(p) { fireProj({ spr: 'orbArrow', size: 0.6, spd: 14, dmg: 20 * p.dmgMul, pierce: 0, life: 1.2, r: 0.4, explode: { r: 2, dmg: 10 * p.dmgMul, fx: { stun: 3, slow: 4 }, col: [200, 200, 180] } }); p.anim = 1; Sfx.play('shoot'); } },
   // ----- Arquero mágico
   starfall: { name: 'Lluvia estelar', cd: 14, use(p) { const t = nearestEnemy(SKILL_RANGE, true), c = t ? { x: t.x, y: t.y } : aimPos(6); for (let k = 0; k < 7; k++) later(k * 0.12, () => { const x = c.x + rand(-1.8, 1.8), y = c.y + rand(-1.8, 1.8); vfxStrike(x, y); aoe(x, y, 1.3, 30 * G.p.dmgMul, { kb: 3, silent: true }); Sfx.play('bolt'); }); } },
@@ -622,16 +628,16 @@ Object.assign(SKILLS, {
   curse: { name: 'Maldición', cd: 12, use(p) { const l = enemiesNear(6); if (!l.length) return false; for (const e of l) { e.mark = 8; e.weak = 8; } vRing(p.x, p.y, 0.4, 6, 0.4, VR.void.slice(0, 5), 44); Sfx.play('summon'); } },
   soulsiphon: { name: 'Sifón de almas', cd: 18, use(p) { const l = enemiesNear(6); if (!l.length) return false; let tot = 0; for (const e of l) { const d = 30 * p.dmgMul; damageEnemy(e, d, { silent: true }); tot += d; vfxArc(e.x, e.y, p.x, p.y, 'pink', 0.4); } healP(tot * 0.4); Sfx.play('bolt'); } },
   // ----- Campeón
-  earthshatter: { name: 'Rompetierra', cd: 12, use(p) { for (let k = 1; k <= 4; k++) later(k * 0.08, () => { const q = G.p, x = q.x + Math.cos(q.a) * k * 1.4, y = q.y + Math.sin(q.a) * k * 1.4; if (G.lv.solid(x, y)) return; aoe(x, y, 1.5, 80 * q.dmgMul, { stun: 1.2, kb: 6, silent: k > 1 }); vfxShock(x, y, 1.5); }); G.shake = Math.max(G.shake, 0.5); Sfx.play('boss'); } },
+  earthshatter: { name: 'Rompetierra', cd: 12, use(p) { for (let k = 1; k <= 4; k++) later(k * 0.08, () => { const q = G.p, x = q.x + Math.cos(q.a) * k * 1.4, y = q.y + Math.sin(q.a) * k * 1.4; if (G.lv.solid(x, y)) return; aoe(x, y, 1.5, 80 * q.dmgMul, { stun: 1.2, kb: 6, silent: k > 1 }); vfxShock(x, y, 1.5 * skMul('area')); vfxDustWave(x, y, 1.5 * skMul('area'), { ramp: 'impact', n: 26 }); }); G.shake = Math.max(G.shake, 0.5); Sfx.play('boss'); } },
   bulwark: { name: 'Baluarte', cd: 20, use(p) { addBuff('bulwark', 'Baluarte', 6, { armor: 0.45 }, C.dim); p.riposte = 1.5; vfxDome('steel', 1.5); Sfx.play('blade'); } },
-  heroic: { name: 'Golpe heroico', cd: 7, use(p) { const n = aoe(p.x, p.y, 2.6, 140 * p.dmgMul, { kb: 10, cone: { a: p.a, arc: 1.2 } }); p.swing = { t: 0, dur: 0.5, dir: 1, move: 'slash', strong: true }; G.shake = Math.max(G.shake, n ? 0.45 : 0.15); Sfx.play('hit'); } },
+  heroic: { name: 'Golpe heroico', cd: 7, use(p) { const n = aoe(p.x, p.y, 2.6, 140 * p.dmgMul, { kb: 10, cone: { a: p.a, arc: 1.2 } }); vfxSlashArc(p.x, p.y, p.a, 1.6, 2.6 * skMul('area'), 'gold'); vfxImpact(p.x + Math.cos(p.a) * 1.6, p.y + Math.sin(p.a) * 1.6, 0.4, 'gold', 1.2); vfxDustWave(p.x, p.y, 2.6 * skMul('area'), { cone: { a: p.a, arc: 1.2 }, ramp: 'gold' }); p.swing = { t: 0, dur: 0.5, dir: 1, move: 'slash', strong: true }; G.shake = Math.max(G.shake, n ? 0.45 : 0.15); Sfx.play('hit'); } },
   // ----- Berserker
   frenzy: { name: 'Frenesí', cd: 14, use(p) { addBuff('frenzy', 'Frenesí', 10, { rate: 1.35, dmg: 1.15 }, C.red); ringFx(p.x, p.y, 1.8, rgb(255, 60, 40), 24); Sfx.play('roar'); } },
-  bloodstorm: { name: 'Tormenta de sangre', cd: 12, use(p) { p.swing = { t: 0, dur: 0.9, dir: 1, spin: true }; for (let k = 0; k < 6; k++) later(k * 0.15, () => { const q = G.p, n = aoe(q.x, q.y, 3, 30 * q.dmgMul, { kb: 4 }); healP(n * 4); vRing(q.x, q.y, 0.4, 3, 0.2, VR.blood ? VR.blood.slice(0, 4) : VR.fire.slice(3, 7), 30); Sfx.play('swing'); }); } },
+  bloodstorm: { name: 'Tormenta de sangre', cd: 12, use(p) { p.swing = { t: 0, dur: 0.9, dir: 1, spin: true }; for (let k = 0; k < 6; k++) later(k * 0.15, () => { const q = G.p, n = aoe(q.x, q.y, 3, 30 * q.dmgMul, { kb: 4 }); healP(n * 4); vfxDustSwirl(q.x, q.y, 3 * skMul('area')); vRing(q.x, q.y, 0.4, 3, 0.2, VR.blood ? VR.blood.slice(0, 4) : VR.fire.slice(3, 7), 30); Sfx.play('swing'); }); } },
   deathwish: { name: 'Deseo de muerte', cd: 25, use(p) { if (p.hp < p.maxHp * 0.35) { logMsg('Estás demasiado débil', C.dim); return false; } p.hp -= p.maxHp * 0.3; addBuff('deathwish', 'Deseo de muerte', 8, { dmg: 1.8 }, C.red); G.hurtFx = 0.5; Sfx.play('roar'); } },
   // ----- Cambiaformas
-  feralpounce: { name: 'Abalanzarse', cd: 7, use(p) { const t = nearestEnemy(8, true); if (!t) return false; const a = Math.atan2(t.y - p.y, t.x - p.x); leapTo(t.x - Math.cos(a) * 0.9, t.y - Math.sin(a) * 0.9); p.a = a; aoe(t.x, t.y, 1.6, 70 * p.dmgMul, { stun: 1.2, kb: 5 }); vfxShock(t.x, t.y, 1.6); Sfx.play('roar'); } },
-  stampede: { name: 'Estampida', cd: 16, use(p) { for (let k = -1; k <= 1; k++) { const a = spawnAlly('wolf', p.x + Math.cos(p.a + k * 0.7) * 1.3, p.y + Math.sin(p.a + k * 0.7) * 1.3); if (a) a.life = 12; } } },
+  feralpounce: { name: 'Abalanzarse', cd: 7, use(p) { const t = nearestEnemy(8, true); if (!t) return false; const a = Math.atan2(t.y - p.y, t.x - p.x); leapTo(t.x - Math.cos(a) * 0.9, t.y - Math.sin(a) * 0.9); p.a = a; aoe(t.x, t.y, 1.6, 70 * p.dmgMul, { stun: 1.2, kb: 5 }); vfxShock(t.x, t.y, 1.6 * skMul('area')); vfxDustWave(t.x, t.y, 1.6 * skMul('area'), { ramp: 'impact' }); Sfx.play('roar'); } },
+  stampede: { name: 'Estampida', cd: 16, use(p) { for (let k = -1; k <= 1; k++) { const a = spawnAlly('wolf', p.x + Math.cos(p.a + k * 0.7) * 1.3, p.y + Math.sin(p.a + k * 0.7) * 1.3); if (a) { a.life = 12; vfxDustWave(a.x, a.y, 1, { n: 16, debris: 3 }); } } vfxDustWave(p.x, p.y, 3, { cone: { a: p.a, arc: 1.6 }, debris: 6 }); G.shake = Math.max(G.shake, 0.25); Sfx.play('roar'); } },
   primal: { name: 'Instinto primario', cd: 20, use(p) { addBuff('primal', 'Instinto primario', 8, { spd: 1.3, dmg: 1.3, regenPct: 0.02 }, C.green); ringFx(p.x, p.y, 1.8, rgb(120, 230, 120), 24); Sfx.play('roar'); } },
   // ----- Azote
   pestilence: { name: 'Pestilencia', cd: 16, use(p) { const l = enemiesNear(8).filter(e => e.poison > 0); if (!l.length) return false; for (const e of l) { aoe(e.x, e.y, 2, 40 * p.dmgMul, { poison: 5, corrode: 4, silent: true }); vRing(e.x, e.y, 0.2, 2, 0.3, VR.poison.slice(1, 5), 20); } Sfx.play('nova'); } },
@@ -643,7 +649,7 @@ Object.assign(SKILLS, {
   singularity: { name: 'Singularidad', cd: 18, use(p) { const a = aimPos(5); vfxBlackHole(a.x, a.y, 4.5); for (const e of G.enemies) { if (e.dead || e.def.boss) continue; const d = Math.hypot(e.x - a.x, e.y - a.y); if (d < 5 && G.lv.los(a.x, a.y, e.x, e.y)) { e.kx += (a.x - e.x) / (d || 1) * 10; e.ky += (a.y - e.y) / (d || 1) * 10; } } later(0.45, () => { aoe(a.x, a.y, 3, 100 * G.p.dmgMul, { slow: 3 }); G.shake = Math.max(G.shake, 0.5); Sfx.play('boss'); }); } },
   // ----- Caballero mágico
   spellblade: { name: 'Hoja hechizada', cd: 6, use(p) { for (let k = -1; k <= 1; k++) fireProj({ a: p.a + k * 0.22, spr: 'orbPurple', size: 0.8, spd: 11, dmg: 48 * p.dmgMul, pierce: 4, life: 1.1, r: 0.4, fx: { slow: 1 } }); p.swing = { t: 0, dur: 0.45, dir: -p.swingDir, move: 'rise', strong: true }; Sfx.play('swing'); } },
-  arcanecharge: { name: 'Carga arcana', cd: 9, use(p) { dashStrike(5, 40 * p.dmgMul, { kb: 5, col: rgb(150, 120, 255) }); aoe(p.x, p.y, 3, 70 * p.dmgMul, { kb: 8, slow: 2 }); vfxEnergyNova(p.x, p.y, 3); } },
+  arcanecharge: { name: 'Carga arcana', cd: 9, use(p) { dashStrike(5, 40 * p.dmgMul, { kb: 5, col: rgb(150, 120, 255), wave: 'arcane' }); aoe(p.x, p.y, 3, 70 * p.dmgMul, { kb: 8, slow: 2 }); vfxEnergyNova(p.x, p.y, 3); } },
   mirrorward: { name: 'Égida reflectante', cd: 18, use(p) { addBuff('mirror', 'Égida reflectante', 5, { armor: 0.7 }, C.cyan); vfxDome('cyan', 5); Sfx.play('level'); } },
 });
 
