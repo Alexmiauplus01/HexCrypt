@@ -584,6 +584,7 @@ function meleeHit() {
     hits++;
   }
   hits += puzzleMelee(p, w); // estatuas del acertijo
+  hits += chainMelee(p, w); // caja de música, braseros, balanza y copas de las pruebas
   // desviar proyectiles enemigos
   for (const pr of G.projs) {
     if (pr.friendly || pr.dead) continue;
@@ -637,13 +638,14 @@ function updateProjs(dt) {
     for (let s = 0; s < steps && !pr.dead; s++) {
       pr.x += pr.vx * sdt; pr.y += pr.vy * sdt;
       if (lv.solid(pr.x, pr.y)) {
-        pr.dead = true;
+        pr.dead = true; chainProjWall(pr); // palancas y campanas de las pruebas
         burst(pr.x - pr.vx * sdt, pr.y - pr.vy * sdt, 0.4, 6, pr.friendly ? rgb(140, 200, 255) : rgb(255, 150, 60), 2, 0.5);
         if (pr.explode) explodeAt(pr.x - pr.vx * sdt, pr.y - pr.vy * sdt, pr.explode);
         else vfxImpact(pr.x - pr.vx * sdt, pr.y - pr.vy * sdt, 0.45, PROJ_RAMP[pr.spr] === 'fire' ? 'impact' : PROJ_RAMP[pr.spr] || 'impact', 0.8);
         break;
       }
       if (pr.friendly && puzzleProj(pr)) { pr.dead = true; break; } // estatuas del acertijo
+      if (pr.friendly && chainProj(pr)) { pr.dead = true; break; } // objetos de las pruebas
       if (pr.friendly) {
         for (const e of G.enemies) {
           if (e.dead || pr.hit.has(e)) continue;

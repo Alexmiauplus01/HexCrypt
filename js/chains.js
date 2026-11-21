@@ -493,10 +493,16 @@ function inTrialArea() {
 }
 function relight(lv) { lv.lightMap = lv.computeLightMap(); }
 function chainRoomNear(lv, i) { const x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of DIRS4) { const r = lv.roomOf[(y + dy) * MW + x + dx]; if (r >= 0 && lv.rooms[r].puzzle) return lv.rooms[r]; } return null; }
-function chainTouch(lv, i, v) {
+// hit: true cuando se golpea (arma o disparo); al caminar contra una palanca o campana solo se avisa, para no fallar sin querer
+function chainTouch(lv, i, v, hit = false) {
   if (v === W_VAULT) { toast(chEN() ? 'A SEALED SLAB: SOME MECHANISM OPENS IT' : 'UNA LOSA SELLADA: ALGÚN MECANISMO LA ABRE', false); Sfx.play('locked'); G.touchCd = 1.2; return true; }
-  if (v >= W_BELL && v < W_BELL + 8) return bellTouch(lv, i, v);
-  if (v < W_LEVER || v >= W_LEVER + 6) return false;
+  const bell = v >= W_BELL && v < W_BELL + 8, lever = v >= W_LEVER && v < W_LEVER + 6;
+  if (!bell && !lever) return false;
+  if (!hit) {
+    if (bell || v < W_LEVER + 3) toast(bell ? (chEN() ? 'STRIKE THE BELL TO RING IT' : 'GOLPEA LA CAMPANA PARA QUE SUENE') : (chEN() ? 'STRIKE THE LEVER TO PULL IT' : 'GOLPEA LA PALANCA PARA BAJARLA'), false);
+    G.touchCd = 1.5; return true;
+  }
+  if (bell) return bellTouch(lv, i, v);
   G.touchCd = 0.6;
   if (v >= W_LEVER + 3) { Sfx.play('locked'); return true; }
   const r = chainRoomNear(lv, i), P = r && r.puzzle; if (!P) return true;
@@ -577,12 +583,10 @@ function chainUpdate() {
   const ri = lv.roomOf[Math.floor(p.y) * MW + Math.floor(p.x)], r = ri >= 0 ? lv.rooms[ri] : null, P = r && r.puzzle;
   if (!P) { G.tileCell = -1; return; }
   const dc = Math.hypot(r.cx + 0.5 - p.x, r.cy + 0.5 - p.y);
-  if (r.type === 'campanas') {
-    if (dc > 1.7) P.near = false;
-    else if (dc < 1.0 && !P.near) {
-      P.near = true;
-      if (!P.state && !G.bellShow) { P.input = []; G.bellShow = { lv, r, i: 0, next: G.time + 0.4 }; toast(chEN() ? 'THE MUSIC BOX PLAYS...' : 'LA CAJA DE MÚSICA SUENA...', false); }
-    }
+  // los objetos de las pruebas se activan golpeándolos (chainMelee / chainProj), no al acercarse: aquí solo se avisa
+  if (!P.state && !P.hinted && TRIAL_HINT[r.type]) {
+    const near = r.type === 'braseros' ? G.decor.some(d => d.type === 'brazier' && d.bz !== undefined && d.used && Math.hypot(d.x - p.x, d.y - p.y) < 1.6) : dc < 1.8;
+    if (near) { P.hinted = true; toast(TRIAL_HINT[r.type][chEN() ? 1 : 0], false); }
   }
   if (r.type === 'baldosas' && !P.state) {
     const c = Math.floor(p.y) * MW + Math.floor(p.x);
@@ -594,19 +598,72 @@ function chainUpdate() {
     const ch = G.pickups.find(k => k.trial === 'baldosas');
     if (!ch || ch.open || ch.dead) { P.state = 1; trialJot('baldosas', 'Crucé la sala de las losas pisando solo el símbolo bueno y abrí el cofre.', 'I crossed the tile room stepping only on the right symbol and opened the chest.'); chainStrike('baldosas'); if (typeof track === 'function') track('baldosas/resuelto'); }
   }
-  if (r.type === 'braseros' && !P.state) {
-    for (const d of G.decor) {
-      if (d.type !== 'brazier' || d.bz === undefined || !d.used || Math.hypot(d.x - p.x, d.y - p.y) > 0.75) continue;
-      if (!(p.off === 'torch' && p.torchFuel > 0)) { if (!P.warned) { P.warned = true; toast(chEN() ? 'YOU NEED A LIT TORCH' : 'NECESITAS UNA ANTORCHA ENCENDIDA', false); } continue; }
-      lightBrazier(lv, r, P, d);
-    }
+}
+const TRIAL_HINT = {
+  campanas: ['GOLPEA LA CAJA DE MÚSICA PARA QUE SUENE', 'STRIKE THE MUSIC BOX TO MAKE IT PLAY'],
+  braseros: ['GOLPEA UN BRASERO CON LA ANTORCHA ENCENDIDA PARA PRENDERLO', 'STRIKE A BRAZIER WITH A LIT TORCH TO LIGHT IT'],
+  balanza: ['GOLPEA LA BALANZA PARA DEPOSITAR ORO', 'STRIKE THE SCALES TO PUT GOLD ON THEM'],
+  copas: ['GOLPEA EL ALTAR PARA ELEGIR UNA COPA', 'STRIKE THE ALTAR TO CHOOSE A CUP'],
+};
+// ---- golpear los objetos de las pruebas (caja de música, braseros, balanza y copas)
+function trialObj(d) {
+  if (d.type === 'brazier') return d.bz !== undefined;
+  return d.type === 'musicbox' || d.type === 'balance' || d.type === 'cups' || d.type === 'cupsEmpty';
+}
+function chainMelee(p, w) {
+  let best = null, bs = Infinity;
+  for (const d of G.decor) { // el que tienes más delante (cerca y centrado)
+    if (!trialObj(d)) continue;
+    const dx = d.x - p.x, dy = d.y - p.y, dist = Math.hypot(dx, dy);
+    if (dist > w.range + 0.35) continue;
+    let da = Math.atan2(dy, dx) - p.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    if (Math.abs(da) > w.arc / 2 && dist > 0.8) continue;
+    if (!G.lv.los(p.x, p.y, d.x, d.y)) continue;
+    const sc = dist + Math.abs(da) * 1.2;
+    if (sc < bs) { bs = sc; best = d; }
   }
-  if ((r.type === 'balanza' || r.type === 'copas') && dc > 1.7) P.near = false;
-  if ((r.type === 'balanza' || r.type === 'copas') && dc < 1.0 && !P.near) {
-    P.near = true;
-    if (P.state) { toast(r.type === 'copas' ? (chEN() ? 'THE CUPS ARE EMPTY' : 'LAS COPAS ESTÁN VACÍAS') : (chEN() ? 'THE SCALES NO LONGER MOVE' : 'LA BALANZA YA NO SE MUEVE'), false); return; }
-    openTrialMenu(r);
+  if (best) return strikeTrialObj(best) ? 1 : 0;
+  return chainWallHit(p.x, p.y, p.a, w.range + 0.45) ? 1 : 0;
+}
+// palancas y campanas: la primera pared delante a tiro del arma
+function chainWallHit(x, y, a, reach) {
+  const lv = G.lv, c = Math.cos(a), s = Math.sin(a);
+  for (let t = 0.2; t <= reach; t += 0.05) {
+    const cx = Math.floor(x + c * t), cy = Math.floor(y + s * t), v = lv.at(cx, cy);
+    if (v === 0) continue;
+    if ((v >= W_LEVER && v < W_LEVER + 6) || (v >= W_BELL && v < W_BELL + 8)) { burst(x + c * (t - 0.1), y + s * (t - 0.1), 0.5, 6, rgb(255, 235, 170), 1.6, 0.4); return chainTouch(lv, cy * MW + cx, v, true); }
+    return false;
   }
+  return false;
+}
+function chainProjWall(pr) {
+  if (!pr.friendly || !pr.basic) return;
+  const lv = G.lv, cx = Math.floor(pr.x), cy = Math.floor(pr.y), v = lv.at(cx, cy);
+  if ((v >= W_LEVER && v < W_LEVER + 6) || (v >= W_BELL && v < W_BELL + 8)) chainTouch(lv, cy * MW + cx, v, true);
+}
+function chainProj(pr) {
+  if (!pr.basic) return false;
+  for (const d of G.decor) { if (!trialObj(d)) continue; const dx = d.x - pr.x, dy = d.y - pr.y; if (dx * dx + dy * dy < 0.32 * 0.32) return strikeTrialObj(d); }
+  return false;
+}
+function strikeTrialObj(d) {
+  const lv = G.lv, r = puzzleRoomOf(d), P = r && r.puzzle, en = chEN(), p = G.p;
+  if (!P) return false;
+  if (d.type === 'brazier') {
+    burst(d.x, d.y, 0.5, 6, rgb(255, 200, 120), 1.4, 0.4, true);
+    if (!d.used || P.state) { Sfx.play('blade'); return true; }
+    if (!(p.off === 'torch' && p.torchFuel > 0)) { Sfx.play('blade'); toast(en ? 'YOU NEED A LIT TORCH IN HAND' : 'NECESITAS UNA ANTORCHA ENCENDIDA EN LA MANO', false); return true; }
+    lightBrazier(lv, r, P, d); return true;
+  }
+  vfxImpact(d.x, d.y, 0.4, 'steel', 0.6); Sfx.play('blade');
+  if (d.type === 'musicbox') {
+    if (P.state) { toast(en ? 'THE MUSIC BOX IS SILENT' : 'LA CAJA DE MÚSICA YA NO SUENA', false); return true; }
+    if (!G.bellShow) { P.input = []; G.bellShow = { lv, r, i: 0, next: G.time + 0.4 }; toast(en ? 'THE MUSIC BOX PLAYS...' : 'LA CAJA DE MÚSICA SUENA...', false); }
+    return true;
+  }
+  if (P.state) { toast(r.type === 'copas' ? (en ? 'THE CUPS ARE EMPTY' : 'LAS COPAS ESTÁN VACÍAS') : (en ? 'THE SCALES NO LONGER MOVE' : 'LA BALANZA YA NO SE MUEVE'), false); return true; }
+  if (G.state === 'play') openTrialMenu(r);
+  return true;
 }
 function tileFail(lv, r, P, c) {
   const p = G.p, en = chEN(); P.fails++;
