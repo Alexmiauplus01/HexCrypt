@@ -1,0 +1,38 @@
+# Sube el juego a itch.io (canal html5) cada vez que se publica la web.
+# Necesita en Settings → Secrets and variables → Actions:
+#   secreto  BUTLER_API_KEY  (itch.io → Settings → API keys)
+#   variable ITCH_GAME       (p. ej. usuario/hexcrypt)
+# Sin ellos no hace nada.
+name: itch.io
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'js/**', 'css/**', 'icons/**', 'version.json']
+  workflow_dispatch:
+concurrency: { group: itch, cancel-in-progress: true }
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar configuración
+        id: cfg
+        env: { KEY: '${{ secrets.BUTLER_API_KEY }}', GAME: '${{ vars.ITCH_GAME }}' }
+        run: |
+          if [ -n "$KEY" ] && [ -n "$GAME" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; else echo "Falta BUTLER_API_KEY o ITCH_GAME: no se sube nada."; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == '1'
+      - name: Preparar la carpeta del juego
+        if: steps.cfg.outputs.ok == '1'
+        run: |
+          mkdir build
+          cp -r index.html css js icons manifest.webmanifest version.json build/
+          sed -E 's/.*"v":"([^"]+)".*/\1/' version.json > build-version.txt
+      - name: Instalar butler
+        if: steps.cfg.outputs.ok == '1'
+        run: |
+          curl -sSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler && chmod +x butler/butler && ./butler/butler -V
+      - name: Subir a itch.io
+        if: steps.cfg.outputs.ok == '1'
+        env: { BUTLER_API_KEY: '${{ secrets.BUTLER_API_KEY }}' }
+        run: ./butler/butler push build "${{ vars.ITCH_GAME }}:html5" --userversion "$(cat build-version.txt)"

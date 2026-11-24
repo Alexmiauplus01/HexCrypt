@@ -1,3 +1,5 @@
+// ¿se está jugando en itch.io? (el juego va en un iframe de *.itch.zone): sin service worker ni opción de instalar app
+const ON_ITCH = /(^|\.)itch\.(zone|io)$/.test(location.hostname);
 // Utilidades generales
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);

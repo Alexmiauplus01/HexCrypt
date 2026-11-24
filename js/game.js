@@ -1728,7 +1728,7 @@ function freshAppCache(why) {
     .then(() => navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()))
     .catch(() => {});
 }
-if ('serviceWorker' in navigator && location.protocol.startsWith('http') && document.querySelector('meta[name=version]') && document.querySelector('meta[name=version]').content !== 'dev') {
+if ('serviceWorker' in navigator && !ON_ITCH && location.protocol.startsWith('http') && document.querySelector('meta[name=version]') && document.querySelector('meta[name=version]').content !== 'dev') {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 

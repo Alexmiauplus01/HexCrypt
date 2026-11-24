@@ -268,7 +268,7 @@ class UI {
       ['toggle', 'CONTROLES', '>', 'controls'],
     ];
     rows.push(['toggle', 'DAR OPINIÓN', '>', 'feedback']);
-    if (!isAppMode()) rows.push(['toggle', 'DESCARGAR APP', '>', 'install']); // dentro de la app ya instalada no hace falta
+    if (!isAppMode() && !ON_ITCH) rows.push(['toggle', 'DESCARGAR APP', '>', 'install']); // dentro de la app ya instalada no hace falta
     if (G.state === 'paused') rows.push(['toggle', 'NUEVA PARTIDA', G.newAsk && G.time - G.newAsk < 3 ? '¿SEGURO?' : '>', 'newrun']);
     if (typeof LANGS !== 'undefined') rows.splice(4, 0, ['toggle', 'IDIOMA', o.lang === 'en' ? 'ENGLISH' : 'ESPAÑOL', 'lang']);
     const rh = rows.length > 16 ? 10 : rows.length > 15 ? 11 : 12; // con muchas filas (pausa), un poco más juntas para que quepa todo
